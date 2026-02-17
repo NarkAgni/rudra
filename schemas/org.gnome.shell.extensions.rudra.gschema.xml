@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.rudra"
+          path="/org/gnome/shell/extensions/rudra/">
+
+    <key name="toggle-launcher" type="as">
+      <default>['&lt;Control&gt;&lt;Shift&gt;space']</default>
+      <summary>Toggle Rudra</summary>
+    </key>
+
+    <key name="corner-radius" type="i">
+      <default>20</default>
+      <summary>Corner radius</summary>
+    </key>
+
+    <key name="font-name" type="s">
+      <default>'Comic Sans MS 12'</default>
+      <summary>Font family and size</summary>
+    </key>
+
+    <key name="background-color" type="s">
+      <default>'#02010E'</default>
+      <summary>Background color (hex)</summary>
+    </key>
+    
+    <key name="background-opacity" type="i">
+      <range min="0" max="255"/>
+      <default>175</default>
+      <summary>Background opacity</summary>
+    </key>
+
+    <key name="highlight-color" type="s">
+      <default>'#F7768E'</default>
+      <summary>Highlight color</summary>
+    </key>
+    
+    <key name="selection-color" type="s">
+      <default>'#970D0D'</default>
+      <summary>Selection color (RGBA Hex)</summary>
+    </key>
+
+    <key name="selection-opacity" type="i">
+        <range min="0" max="255"/>
+        <default>255</default>
+    </key>
+
+    <key name="hover-color" type="s">
+      <default>'#E01B24'</default>
+      <summary>Hover color (RGBA Hex)</summary>
+    </key>
+
+    <key name="hover-opacity" type="i">
+        <range min="0" max="255"/>
+        <default>50</default>
+    </key>
+
+    <key name="margin-top" type="i">
+      <default>250</default>
+    </key>
+
+    <key name="margin-bottom" type="i">
+      <default>0</default>
+    </key>
+    
+    <key name="margin-left" type="i">
+      <default>0</default>
+    </key>
+
+    <key name="margin-right" type="i">
+      <default>0</default>
+    </key>
+
+    <key name="max-results" type="i">
+      <default>10</default>
+    </key>
+
+    <key name="visible-results" type="i">
+      <default>5</default>
+    </key>
+
+    <key name="result-spacing" type="i">
+      <default>4</default>
+    </key>
+
+  </schema>
+</schemalist>

@@ -1,0 +1,18 @@
+{
+  "name": "Rudra",
+  "description": "A lightning-fast, keyboard-centric launcher for GNOME Shell designed for power users.\n\nKey Features:\n• Instant App Search: Launch applications with a few keystrokes.\n• File Hunt: Quickly find files in your home directory using the '.' prefix.\n• Web Search: Search Google ('g ') or YouTube ('yt ') directly from the launcher.\n• Command Runner: Execute shell commands using the '>' prefix.\n• Deep Customization: Adjust fonts, colors, opacity, corner radius, and screen positioning to match your setup.\n\nDisclaimer: This extension is not affiliated with, endorsed by, or sponsored by Google or YouTube.",
+  "uuid": "rudra@narkagni",
+  "settings-schema": "org.gnome.shell.extensions.rudra",
+  "shell-version": [
+    "45",
+    "46",
+    "47",
+    "48",
+    "49"
+  ],
+  "url": "https://github.com/narkagni/rudra",
+  "donations": {
+    "buymeacoffee": "narkagni"
+  },
+  "version": 1
+}
