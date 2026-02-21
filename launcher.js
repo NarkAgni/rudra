@@ -1,5 +1,6 @@
 import St from 'gi://St';
 import Gio from 'gi://Gio';
+import Mtk from 'gi://Mtk';
 import GLib from 'gi://GLib';
 import Pango from 'gi://Pango';
 import Clutter from 'gi://Clutter';
@@ -55,7 +56,7 @@ export class LauncherUI {
             width: 660,
             reactive: true,
             style_class: 'launcher-box',
-            x_align: Clutter.ActorAlign.CENTER,
+            x_align: Clutter.ActorAlign.START,
             y_align: Clutter.ActorAlign.START,
         });
 
@@ -365,6 +366,21 @@ export class LauncherUI {
         return `rgba(${r}, ${g}, ${b}, ${a})`;
     }
 
+    _positionBox() {
+        let [mouseX, mouseY] = global.get_pointer();
+        let monitorIndex = global.display.get_monitor_index_for_rect(
+            new Mtk.Rectangle({ x: mouseX, y: mouseY, width: 1, height: 1 })
+        );
+        // Fallback to primary if index not found
+        if (monitorIndex < 0) monitorIndex = global.display.get_primary_monitor();
+        let geo = global.display.get_monitor_geometry(monitorIndex);
+        let boxWidth = this._box.width || 660;
+        this._box.set_position(
+            Math.floor(geo.x + (geo.width - boxWidth) / 2),
+            0
+        );
+    }
+
     toggle() { this._isOpen ? this.close() : this.open(); }
 
     open() {
@@ -378,6 +394,7 @@ export class LauncherUI {
         this._suggestedSuffix = '';
         this._resultsView.clear();
         this._separator.visible = false;
+        this._positionBox();
 
         if (!Main.pushModal(this._container)) {
             this._container.hide();
@@ -390,7 +407,6 @@ export class LauncherUI {
             this._focusTimeoutId = 0;
         }
 
-        // Store the ID and reset it when it runs
         this._focusTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
             this._focusTimeoutId = 0; 
             if (this._entry) this._entry.grab_key_focus();
