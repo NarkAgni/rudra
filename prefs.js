@@ -1,6 +1,7 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
+import Gio from 'gi://Gio';
 import Pango from 'gi://Pango';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -93,7 +94,7 @@ export default class RudraPreferences extends ExtensionPreferences {
         window.add(page);
 
         this._buildShortcutsGroup(page, window, settings);
-        this._buildAppearanceGroup(page, settings, createResetBtn); // Standard Group (No Master Reset)
+        this._buildAppearanceGroup(page, settings, createResetBtn);
         this._buildColorsExpander(page, settings, createResetBtn, createGroupReset);
         this._buildMarginsExpander(page, settings, createResetBtn, createGroupReset);
         this._buildSearchExpander(page, settings, createResetBtn, createGroupReset);
@@ -393,7 +394,7 @@ export default class RudraPreferences extends ExtensionPreferences {
             margin_bottom: 12,
         });
 
-        const logoFile = `${this.path}/icons/logo.png`;
+        const logoFile = `${this.path}/icons/logo.svg`;
         const logo = Gtk.Image.new_from_file(logoFile);
         logo.set_pixel_size(128);
         heroBox.append(logo);
@@ -431,13 +432,9 @@ export default class RudraPreferences extends ExtensionPreferences {
                 valign: Gtk.Align.CENTER,
                 css_classes: ['dim-label'],
             }));
+      
             row.connect('activated', () => {
-                try {
-                    const Gio = imports.gi.Gio;
-                    Gio.AppInfo.launch_default_for_uri(url, window.get_display().get_app_launch_context());
-                } catch (e) {
-                    try { imports.gi.GLib.spawn_command_line_async(`xdg-open ${url}`); } catch (_) {}
-                }
+                Gio.AppInfo.launch_default_for_uri(url, window.get_display().get_app_launch_context());
             });
             group.add(row);
         };
@@ -487,14 +484,12 @@ export default class RudraPreferences extends ExtensionPreferences {
             valign: Gtk.Align.CENTER,
             css_classes: ['dim-label'],
         }));
+
         coffeeRow.connect('activated', () => {
-            try {
-                imports.gi.Gio.AppInfo.launch_default_for_uri(
-                    'https://buymeacoffee.com/narkagni',
-                    window.get_display().get_app_launch_context());
-            } catch (e) {
-                try { imports.gi.GLib.spawn_command_line_async('xdg-open https://buymeacoffee.com/narkagni'); } catch (_) {}
-            }
+            Gio.AppInfo.launch_default_for_uri(
+                'https://buymeacoffee.com/narkagni',
+                window.get_display().get_app_launch_context()
+            );
         });
         group.add(coffeeRow);
 
@@ -522,8 +517,8 @@ export default class RudraPreferences extends ExtensionPreferences {
             group.add(row);
         };
 
-        addCrypto('Bitcoin (BTC)', 'security-high-symbolic',   '1GSHkxfhYjk1Qe4AQSHg3aRN2jg2GQWAcV');
-        addCrypto('Ethereum (ETH)', 'emblem-shared-symbolic',   '0xf43c3f83e53495ea06676c0d9d4fc87ce627ffa3');
+        addCrypto('Bitcoin (BTC)',         'security-high-symbolic',   '1GSHkxfhYjk1Qe4AQSHg3aRN2jg2GQWAcV');
+        addCrypto('Ethereum (ETH)',         'emblem-shared-symbolic',   '0xf43c3f83e53495ea06676c0d9d4fc87ce627ffa3');
         addCrypto('Tether (USDT - TRC20)', 'security-medium-symbolic', 'THnqG9nchLgaf1LzGK3CqdmNpRxw59hs82');
     }
 

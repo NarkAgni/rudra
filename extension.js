@@ -8,7 +8,7 @@ export default class KeyboardLauncher extends Extension {
 
     enable() {
         this._settings = this.getSettings();
-        this._ui = new LauncherUI(this._settings, () => this.openPreferences(), this.uuid);
+        this._ui = new LauncherUI(this._settings, () => this.openPreferences(), this.uuid, this.path);
         this._bindKey();
         this._settingsChangedId = this._settings.connect('changed::toggle-launcher', () => {
             this._bindKey();
@@ -36,7 +36,6 @@ export default class KeyboardLauncher extends Extension {
         Main.wm.removeKeybinding('toggle-launcher');
 
         if (this._ui) {
-            this._ui.close();
             this._ui.destroy();
             this._ui = null;
         }

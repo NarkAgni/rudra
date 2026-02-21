@@ -1,5 +1,5 @@
 import St from 'gi://St';
-import Gtk from 'gi://Gtk';
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Pango from 'gi://Pango';
 import Clutter from 'gi://Clutter';
@@ -7,15 +7,17 @@ import { SearchResults } from './searchResults.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 export class LauncherUI {
-    constructor(settings, openPrefsCallback, uuid) {
+    constructor(settings, openPrefsCallback, uuid, extPath) {
         this._settings = settings;
         this._openPrefsCallback = openPrefsCallback;
         this._uuid = uuid || 'rudra@narkagni';
+        this._extPath = extPath;
         this._isOpen = false;
         this._userTypedText = '';
         this._updatingEntry = false;
         this._suggestedSuffix = '';
         this._autocompleteIdleId = 0;
+        this._focusTimeoutId = 0;
 
         this._buildUI();
         this._applyStyles();
@@ -103,31 +105,31 @@ export class LauncherUI {
             layout_manager: new Clutter.BinLayout()
         });
 
+        let iconFile = Gio.File.new_for_path(this._extPath + '/icons/setting.svg');
         let icon = new St.Icon({
-            icon_name: 'emblem-system-symbolic',
-            style_class: 'settings-icon',
+            gicon: new Gio.FileIcon({ file: iconFile }),
+            icon_size: 28,
             x_align: Clutter.ActorAlign.CENTER,
             y_align: Clutter.ActorAlign.CENTER,
         });
         this._settingsBtn.add_child(icon);
 
-        let clickAction = new Clutter.ClickAction();
-        clickAction.connect('clicked', () => {
-            this._openSettingsSafe();
+        this._settingsBtn.connect('button-release-event', (actor, event) => {
+            if (event.get_button() === 1) { 
+                this._openSettingsSafe();
+                return Clutter.EVENT_STOP;
+            }
+            return Clutter.EVENT_PROPAGATE;
         });
-        this._settingsBtn.add_action(clickAction);
 
         icon.set_opacity(100);
-        icon.set_style('color: #aaaaaa;');
 
         this._settingsBtn.connect('notify::hover', () => {
             if (this._settingsBtn.hover) {
                 icon.set_opacity(255);
-                icon.set_style('color: #ffffff;');
                 global.display.set_cursor(Clutter.Cursor.HAND1);
             } else {
                 icon.set_opacity(128);
-                icon.set_style('color: #aaaaaa;');
                 global.display.set_cursor(Clutter.Cursor.DEFAULT);
             }
         });
@@ -176,14 +178,8 @@ export class LauncherUI {
 
         this._entry.clutter_text.connect('key-press-event', (actor, event) => {
             let sym = event.get_key_symbol();
-            let state = event.get_state();
 
             if (sym === Clutter.KEY_Escape) {
-                this.close();
-                return Clutter.EVENT_STOP;
-            }
-
-            if (this._checkToggleShortcut(sym, state)) {
                 this.close();
                 return Clutter.EVENT_STOP;
             }
@@ -312,25 +308,6 @@ export class LauncherUI {
         });
     }
 
-    _checkToggleShortcut(keyval, state) {
-        let shortcuts = this._settings.get_strv('toggle-launcher');
-        if (!shortcuts || shortcuts.length === 0) return false;
-
-        let parsed = Gtk.accelerator_parse(shortcuts[0]);
-        let ok, accelKey, accelMods;
-        if (Array.isArray(parsed)) {
-            [ok, accelKey, accelMods] = parsed;
-        } else {
-            ok = parsed.ok;
-            accelKey = parsed.accelerator_key;
-            accelMods = parsed.accelerator_mods;
-        }
-
-        if (!ok) return false;
-        let mask = state & Gtk.accelerator_get_default_mod_mask();
-        return (keyval === accelKey && mask === accelMods);
-    }
-
     _applyStyles() {
         let mt = this._settings.get_int('margin-top');
         let mb = this._settings.get_int('margin-bottom');
@@ -408,7 +385,14 @@ export class LauncherUI {
             return;
         }
 
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
+        if (this._focusTimeoutId) {
+            GLib.source_remove(this._focusTimeoutId);
+            this._focusTimeoutId = 0;
+        }
+
+        // Store the ID and reset it when it runs
+        this._focusTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
+            this._focusTimeoutId = 0; 
             if (this._entry) this._entry.grab_key_focus();
             return GLib.SOURCE_REMOVE;
         });
@@ -433,6 +417,8 @@ export class LauncherUI {
     }
 
     destroy() {
+        this.close();
+
         if (this._autocompleteIdleId) {
             GLib.source_remove(this._autocompleteIdleId);
             this._autocompleteIdleId = 0;
