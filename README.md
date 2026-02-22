@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="icons/logo.png" alt="Rudra Logo" width="128" height="128">
+  <img src="icons/logo.svg" alt="Rudra Logo" width="128" height="128">
   <h1>Rudra</h1>
   <p><strong>A lightning-fast, keyboard-centric launcher for GNOME Shell</strong></p>
   <p>Developed by <strong>Narkagni</strong></p>
@@ -9,8 +9,8 @@
 
 <h2>Overview</h2>
 <p>
-  Rudra is a modern launcher designed to replace or augment the default GNOME overview. 
-  Inspired by tools like Alfred and Raycast, it provides instant access to applications, files, 
+  Rudra is a modern launcher designed to replace or augment the default GNOME overview.
+  Inspired by tools like Alfred and Raycast, it provides instant access to applications, files,
   web searches, and system commands—all through a minimal, highly customizable interface.
 </p>
 
@@ -35,16 +35,16 @@
   <ul>
     <li><strong>Applications:</strong> Type normally to find and launch installed apps.</li>
     <li><strong>File Hunt (<code>.</code>):</strong> Start with a dot to instantly search for files in your home directory.</li>
-    <li><strong>Google Search (<code>g </code>):</strong> Type 'g' followed by a space to search Google in your default browser.</li>
-    <li><strong>YouTube Search (<code>yt </code>):</strong> Type 'yt' followed by a space to search YouTube directly.</li>
-    <li><strong>Command Runner (<code>&gt;</code>):</strong> Start with '>' to execute shell commands directly.</li>
+    <li><strong>Google Search (<code>g </code>):</strong> Type <code>g</code> followed by a space to search Google in your default browser.</li>
+    <li><strong>YouTube Search (<code>yt </code>):</strong> Type <code>yt</code> followed by a space to search YouTube directly.</li>
+    <li><strong>Command Runner (<code>&gt;</code>):</strong> Start with <code>></code> to execute shell commands directly.</li>
   </ul>
 </details>
 
 <details>
   <summary><strong>Smart Autocomplete</strong></summary>
   <p>
-    The launcher predicts what you are typing and offers inline suggestions. 
+    The launcher predicts what you are typing and offers inline suggestions.
     Simply press <strong>Tab</strong> or <strong>Right Arrow</strong> to complete the suggestion.
   </p>
 </details>
@@ -64,45 +64,84 @@
 
 <hr>
 
+<h2>Project Structure</h2>
+
+<pre>
+rudra@narkagni/
+├── extension.js          # Entry point — loads and wires everything together
+├── prefs.js              # LibAdwaita preferences window
+├── stylesheet.css        # Global CSS for St widgets
+├── metadata.json         # Extension metadata (UUID, GNOME versions, etc.)
+├── icons/
+│   ├── logo.svg          # Extension logo
+│   └── setting.svg       # Settings button icon
+├── schemas/
+│   └── org.gnome.shell.extensions.rudra.gschema.xml
+└── src/
+    ├── core/             # Business logic (no UI dependencies)
+    │   ├── ActionExecutor.js   # Launches apps, files, URLs, and commands
+    │   ├── AppSearch.js        # App cache + fuzzy search
+    │   ├── FileSearch.js       # Async recursive file search
+    │   ├── QueryParser.js      # Routes queries to the correct search mode
+    │   └── utils.js            # Shared helpers (hexToRgba, escapeMarkup)
+    ├── ui/               # GNOME Shell UI layer (St / Clutter)
+    │   ├── LauncherUI.js       # Main launcher window, input, keyboard events
+    │   ├── SearchResults.js    # Result list rendering and navigation
+    │   └── ThemeManager.js     # Dynamic CSS injection and positioning
+    └── prefs/            # Preferences-only widgets
+        ├── PrefsUtils.js       # Reset buttons and shared GTK helpers
+        └── ShortcutDialog.js   # Keybinding recorder dialog
+</pre>
+
+<hr>
+
 <h2>Installation</h2>
+
+<h3>Install from GNOME Extensions</h3>
+<p>The easiest way — install directly from the official GNOME Extensions website:</p>
+<div align="center">
+  <a href="https://extensions.gnome.org/extension/9342/rudra/">
+    <img src="https://img.shields.io/badge/GNOME_Extensions-4A86CF?style=for-the-badge&logo=gnome&logoColor=white" height="40" alt="Get it on GNOME Extensions">
+  </a>
+</div>
+<br>
 
 <h3>Requirements</h3>
 <ul>
-  <li>GNOME Shell 45 - 49</li>
-  <li><code>libglib2.0-bin</code> (Required for schema compilation)</li>
+  <li>GNOME Shell 45 – 49</li>
+  <li><code>libglib2.0-bin</code> (required for schema compilation)</li>
 </ul>
 
 <h3>Install from Source</h3>
 
 <p><strong>1. Clone the repository</strong></p>
-<pre>
-git clone https://github.com/NarkAgni/rudra.git
-cd rudra
-</pre>
+<pre>git clone https://github.com/NarkAgni/rudra.git
+cd rudra</pre>
 
 <p><strong>2. Install using Make</strong></p>
-<pre>
-make install
-</pre>
+<pre>make install</pre>
 
 <p><strong>3. Restart GNOME Shell</strong></p>
-<p>For X11: Press <code>Alt+F2</code>, type <code>r</code>, and hit Enter.<br>
-For Wayland: Log out and log back in.</p>
+<p>
+  For <strong>X11</strong>: Press <code>Alt+F2</code>, type <code>r</code>, and hit Enter.<br>
+  For <strong>Wayland</strong>: Log out and log back in.
+</p>
 
 <p><strong>4. Enable the extension</strong></p>
-<pre>
-gnome-extensions enable rudra@narkagni
-</pre>
+<pre>gnome-extensions enable rudra@narkagni</pre>
+
+<p><strong>To uninstall:</strong></p>
+<pre>make uninstall</pre>
 
 <hr>
 
 <h2>Usage</h2>
 
 <ul>
-  <li><strong>Toggle Launcher:</strong> <code>Ctrl + Shift + Space</code> (Default, customizable in settings)</li>
-  <li><strong>Navigate Results:</strong> <code>Up / Down</code> Arrows</li>
-  <li><strong>Select/Run:</strong> <code>Enter</code></li>
-  <li><strong>Autocomplete:</strong> <code>Tab</code> or <code>Right Arrow</code></li>
+  <li><strong>Toggle Launcher:</strong> <code>Ctrl + Shift + Space</code> (default, customizable in settings)</li>
+  <li><strong>Navigate Results:</strong> <code>↑ / ↓</code> Arrow keys</li>
+  <li><strong>Select / Run:</strong> <code>Enter</code></li>
+  <li><strong>Autocomplete:</strong> <code>Tab</code> or <code>→ Right Arrow</code></li>
   <li><strong>Close:</strong> <code>Esc</code></li>
 </ul>
 
@@ -115,7 +154,7 @@ gnome-extensions enable rudra@narkagni
 
 <div align="center">
   <a href="https://github.com/sponsors/NarkAgni">
-    <img src="https://img.shields.io/badge/Sponsor_on_GitHub-EA4AAA?style=for-the-badge&logo=github-sponsors" height="40">
+    <img src="https://img.shields.io/badge/❤️_Sponsor-NarkAgni-EA4AAA?style=for-the-badge&logo=github&logoColor=white" height="40">
   </a>
   &nbsp;&nbsp;
   <a href="https://buymeacoffee.com/narkagni">
@@ -140,6 +179,4 @@ gnome-extensions enable rudra@narkagni
 
 <hr>
 
-<p align="center">
-  License: GPL-3.0
-</p>
+<p align="center">License: GPL-3.0</p>
