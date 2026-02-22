@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg1"
+   width="500"
+   height="500"
+   viewBox="0 0 500 500"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient8">
+      <stop
+         style="stop-color:#ea2225;stop-opacity:1;"
+         offset="0.33639893"
+         id="stop8" />
+      <stop
+         style="stop-color:#fc791b;stop-opacity:1;"
+         offset="1"
+         id="stop9" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient6">
+      <stop
+         style="stop-color:#ec2426;stop-opacity:1;"
+         offset="0.31947398"
+         id="stop6" />
+      <stop
+         style="stop-color:#f76321;stop-opacity:1;"
+         offset="1"
+         id="stop7" />
+    </linearGradient>
+    <linearGradient
+       xlink:href="#linearGradient6"
+       id="linearGradient7"
+       x1="-102.28716"
+       y1="58.132145"
+       x2="248.65396"
+       y2="337.67471"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(186.04093,13.566425)" />
+    <linearGradient
+       xlink:href="#linearGradient8"
+       id="linearGradient9"
+       x1="-212.51588"
+       y1="174.7141"
+       x2="75.603554"
+       y2="420.58447"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(292.88437,1.9059721)" />
+  </defs>
+  <g
+     id="g1">
+    <path
+       style="fill:url(#linearGradient7)"
+       d="M 84.389092,72.651559 353.13115,303.90949 328.35351,276.59056 c 0,0 48.91995,-10.80051 35.57815,-73.06226 -13.34181,-62.26176 -143.58323,-43.20204 -143.58323,-43.20204 l -74.33291,-65.438361 167.09022,1.270648 c 0,0 113.72299,10.800513 120.07623,121.346883 6.35324,110.54637 -114.35832,132.78271 -114.35832,132.78271 L 81.212472,145.07849 Z"
+       id="path1" />
+    <path
+       style="fill:url(#linearGradient9)"
+       d="M 81.003811,424.7141 258.25921,425.34943 147.39517,331.00381 148.0305,297.6493 297.01398,425.34943 370.3939,425.66709 81.321471,177.89072 Z"
+       id="path2" />
+  </g>
+</svg>
