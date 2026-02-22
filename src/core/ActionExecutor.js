@@ -5,6 +5,32 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 
 /**
+ * Finds the first available terminal emulator on the system.
+ * Returns an argv array ready to wrap a command, or null if none found.
+ * @param {string} command - The shell command to run inside the terminal.
+ * @returns {string[]|null} argv for Gio.Subprocess, or null.
+ * @private
+ */
+function _buildTerminalArgv(command) {
+    const terminals = [
+        ['gnome-terminal', '--', 'bash', '-c', `${command}; echo; read -p "Press Enter to close..."`],
+        ['ptyxis',         '--', 'bash', '-c', `${command}; echo; read -p "Press Enter to close..."`],
+        ['kgx',            '--', 'bash', '-c', `${command}; echo; read -p "Press Enter to close..."`],
+        ['konsole',        '-e', 'bash', '-c', `${command}; echo; read -p "Press Enter to close..."`],
+        ['xfce4-terminal', '-e', `bash -c '${command}; echo; read -p "Press Enter to close..."'`],
+        ['xterm',          '-e', `bash -c '${command}; echo; read -p "Press Enter to close..."'`],
+    ];
+
+    for (let args of terminals) {
+        if (GLib.find_program_in_path(args[0])) {
+            return args;
+        }
+    }
+    return null;
+}
+
+
+/**
  * Executes an action based on the selected search result item.
  * Handles applications, files, shell commands, and web URLs.
  * @param {Object} item - The result item object to execute.
@@ -18,9 +44,15 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 export function executeItem(item) {
     try {
         if (item.type === 'command') {
-            let parsedArgs = GLib.shell_parse_argv(item.command);
-            let argv = parsedArgs[1];
-            Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
+            let argv = _buildTerminalArgv(item.command);
+
+            if (argv) {
+                Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
+            } else {
+                let parsed = GLib.shell_parse_argv(item.command);
+                Gio.Subprocess.new(parsed[1], Gio.SubprocessFlags.NONE);
+                Main.notify('Rudra', 'No terminal emulator found. Command ran in background.');
+            }
             
         } else if (item.type === 'web') {
             let context = global.create_app_launch_context(0, -1);
