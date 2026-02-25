@@ -1,11 +1,16 @@
 import St from 'gi://St';
-import Gtk from 'gi://Gtk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Clutter from 'gi://Clutter';
 import { SearchResults } from './SearchResults.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { applyTheme, positionLauncherBox } from './ThemeManager.js';
+
+
+const DEFAULT_MOD_MASK = [
+    'SHIFT_MASK', 'CONTROL_MASK', 'MOD1_MASK', 
+    'SUPER_MASK', 'HYPER_MASK', 'META_MASK'
+].reduce((mask, mod) => mask | Clutter.ModifierType[mod], 0);
 
 
 /**
@@ -70,6 +75,51 @@ export class LauncherUI {
         });
     }
 
+    /**
+     * Parses a shortcut string into Clutter keyval and modifiers,
+     * replacing the need for Gtk.accelerator_parse.
+     * * @private
+     * @param {string} accelerator - The shortcut string (e.g., '<Super>a', '<Primary><Shift>Space')
+     * @returns {[number, number]} An array containing [keyval, modifiers]
+     */
+    _parseAccelerator(accelerator) {
+        let mods = 0;
+        let keyName = accelerator;
+
+        const modifierMap = {
+            '<Super>': Clutter.ModifierType.SUPER_MASK,
+            '<Primary>': Clutter.ModifierType.CONTROL_MASK,
+            '<Control>': Clutter.ModifierType.CONTROL_MASK,
+            '<Ctrl>': Clutter.ModifierType.CONTROL_MASK,
+            '<Alt>': Clutter.ModifierType.MOD1_MASK,
+            '<Shift>': Clutter.ModifierType.SHIFT_MASK
+        };
+
+        for (const [modStr, modValue] of Object.entries(modifierMap)) {
+            if (keyName.includes(modStr)) {
+                mods |= modValue;
+                keyName = keyName.replace(modStr, '');
+            }
+        }
+
+        let keyval = Clutter[`KEY_${keyName}`];
+
+        if (keyval === undefined || keyval === Clutter.KEY_VoidSymbol) {
+            const lowerName = keyName.toLowerCase();
+            
+            if (lowerName === 'space') {
+                keyval = Clutter.KEY_space;
+            } else if (lowerName === 'return' || lowerName === 'enter') {
+                keyval = Clutter.KEY_Return;
+            } else if (keyName.length === 1) {
+                keyval = keyName.charCodeAt(0);
+            } else {
+                keyval = 0;
+            }
+        }
+
+        return [keyval, mods];
+    }
 
     /**
      * Parses the toggle shortcut from settings for manual capture during modal state.
@@ -85,9 +135,9 @@ export class LauncherUI {
             return;
         }
         
-        let parsedShortcut = Gtk.accelerator_parse(accelerator);
-        this._toggleKeyval = parsedShortcut[1];
-        this._toggleMods = parsedShortcut[2];
+        let [keyval, mods] = this._parseAccelerator(accelerator);
+        this._toggleKeyval = keyval;
+        this._toggleMods = mods;
     }
 
 
@@ -241,7 +291,6 @@ export class LauncherUI {
             this._hintLabel.hide();
             this._suggestedSuffix = '';
 
-            // Clean Mode Hints - No leading space characters used!
             if (text === '.' || text === '. ') {
                 this.showModeHint('Search Files/Folders...');
             } else if (text === '>' || text === '> ') {
@@ -263,7 +312,8 @@ export class LauncherUI {
 
         this._entry.clutter_text.connect('key-press-event', (actor, event) => {
             let keySymbol = event.get_key_symbol();
-            let state = event.get_state() & Gtk.accelerator_get_default_mod_mask();
+            
+            let state = event.get_state() & DEFAULT_MOD_MASK;
 
             let isToggleShortcut = (this._toggleKeyval !== null) && 
                                    (keySymbol === this._toggleKeyval) && 
@@ -318,33 +368,34 @@ export class LauncherUI {
                 }
             }
             
-            return Clutter.EVENT_PROPAGATE;
-        });
-
-        this._container.connect('captured-event', (actor, event) => {
-            if (event.type() === Clutter.EventType.BUTTON_PRESS) {
-                let coords = event.get_coords();
-                let mouseX = coords[0];
-                let mouseY = coords[1];
-                
-                let boxPos = this._box.get_transformed_position();
-                let boxX = boxPos[0];
-                let boxY = boxPos[1];
-                
-                let boxSize = this._box.get_transformed_size();
-                let boxWidth = boxSize[0];
-                let boxHeight = boxSize[1];
-                
-                let isOutsideX = (mouseX < boxX) || (mouseX > boxX + boxWidth);
-                let isOutsideY = (mouseY < boxY) || (mouseY > boxY + boxHeight);
-
-                if (isOutsideX || isOutsideY) {
-                    this.close(); 
-                    return Clutter.EVENT_STOP;
+            this._container.connect('captured-event', (actor, event) => {
+                if (event.type() === Clutter.EventType.BUTTON_PRESS) {
+                    let coords = event.get_coords();
+                    let mouseX = coords[0];
+                    let mouseY = coords[1];
+                    
+                    let boxPos = this._box.get_transformed_position();
+                    let boxX = boxPos[0];
+                    let boxY = boxPos[1];
+                    
+                    let boxSize = this._box.get_transformed_size();
+                    let boxWidth = boxSize[0];
+                    let boxHeight = boxSize[1];
+                    
+                    let isOutsideX = (mouseX < boxX) || (mouseX > boxX + boxWidth);
+                    let isOutsideY = (mouseY < boxY) || (mouseY > boxY + boxHeight);
+    
+                    if (isOutsideX || isOutsideY) {
+                        this.close(); 
+                        return Clutter.EVENT_STOP;
+                    }
                 }
-            }
+                return Clutter.EVENT_PROPAGATE;
+            });
+            
             return Clutter.EVENT_PROPAGATE;
         });
+
     }
 
 
@@ -589,3 +640,5 @@ export class LauncherUI {
         }
     }
 }
+
+
