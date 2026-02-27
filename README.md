@@ -38,6 +38,7 @@
     <li><strong>Google Search (<code>g </code>):</strong> Type <code>g</code> followed by a space to search Google in your default browser.</li>
     <li><strong>YouTube Search (<code>yt </code>):</strong> Type <code>yt</code> followed by a space to search YouTube directly.</li>
     <li><strong>Command Runner (<code>&gt;</code>):</strong> Start with <code>></code> to execute shell commands directly.</li>
+    <li><strong>Calculator:</strong> Type any arithmetic expression (e.g. <code>2 + 2</code>, <code>(10 * 3) / 2</code>, <code>2^8</code>) to instantly evaluate it. Press <code>Enter</code> to copy the result to your clipboard.</li>
   </ul>
 </details>
 
