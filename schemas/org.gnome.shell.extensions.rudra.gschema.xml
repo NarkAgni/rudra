@@ -82,5 +82,11 @@
       <default>4</default>
     </key>
 
+    <key name="close-on-outside-click" type="b">
+      <default>true</default>
+      <summary>Close on outside click</summary>
+      <description>Close the launcher when clicking outside the search box.</description>
+    </key>
+
   </schema>
 </schemalist>

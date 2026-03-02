@@ -85,6 +85,15 @@ export default class RudraPreferences extends ExtensionPreferences {
         row.add_suffix(shortcutLabel); 
         row.add_suffix(editBtn); 
         group.add(row);
+
+        const rowOutsideClick = new Adw.SwitchRow({
+            title: 'Close on Outside Click',
+            subtitle: 'Close the launcher when clicking outside the window',
+            icon_name: 'pointer-primary-symbolic'
+        });
+        
+        settings.bind('close-on-outside-click', rowOutsideClick, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(rowOutsideClick);
     }
 
 

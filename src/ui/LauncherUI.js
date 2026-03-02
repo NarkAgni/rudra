@@ -215,9 +215,8 @@ export class LauncherUI {
             layout_manager: new Clutter.BinLayout()
         });
 
-        let iconFile = Gio.File.new_for_path(this._extPath + '/icons/setting.svg');
         let settingsIcon = new St.Icon({ 
-            gicon: new Gio.FileIcon({ file: iconFile }), 
+            icon_name: 'preferences-system-symbolic',
             icon_size: 28, 
             x_align: Clutter.ActorAlign.CENTER, 
             y_align: Clutter.ActorAlign.CENTER 
@@ -386,8 +385,10 @@ export class LauncherUI {
                     let isOutsideY = (mouseY < boxY) || (mouseY > boxY + boxHeight);
     
                     if (isOutsideX || isOutsideY) {
-                        this.close(); 
-                        return Clutter.EVENT_STOP;
+                        if (this._settings.get_boolean('close-on-outside-click')) {
+                            this.close(); 
+                            return Clutter.EVENT_STOP;
+                        }
                     }
                 }
                 return Clutter.EVENT_PROPAGATE;
