@@ -298,6 +298,8 @@ export class LauncherUI {
                 this.showModeHint('Search Google...');
             } else if (text === 'yt ' || text === 'yt  ') {
                 this.showModeHint('Search YouTube...');
+            } else if (text === 'ddg ' || text === 'ddg  ') {
+                this.showModeHint('Search DuckDuckGo...')
             }
 
             this._searchTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 120, () => {

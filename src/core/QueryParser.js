@@ -2,7 +2,6 @@ import Gio from 'gi://Gio';
 import { searchApps } from './AppSearch.js';
 import { searchFiles } from './FileSearch.js';
 
-
 /**
  * Parses the user's input query to determine the mode (App, File, Web, Command)
  * and fetches the corresponding results asynchronously.
@@ -47,6 +46,22 @@ export function fetchResults(query, maxRes, callback) {
             return;
         }
     }
+
+  // DuckDuckGo Search Mode
+  if (query.startsWith('ddg ')) {
+    let searchText = query.substring(4).trim();
+    if (searchText) {
+      let resultList = [{
+        type: 'web',
+        name: 'Search DuckDuckGo',
+        description: searchText,
+        icon: new Gio.ThemedIcon({ names: ['duckduckgo', 'web-browser-symbolic'] }),
+        url: 'https://duckduckgo.com/?q=' + encodeURIComponent(searchText)
+      }];
+      callback(resultList);
+      return;
+    }
+  }
 
     // YouTube Search Mode
     if (query.startsWith('yt ')) {
