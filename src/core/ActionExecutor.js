@@ -1,5 +1,6 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
+import St from 'gi://St';
 import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -65,12 +66,14 @@ export function executeItem(item) {
         } else if (item.type === 'app') {
             let appSystem = Shell.AppSystem.get_default();
             let sysApp = appSystem.lookup_app(item.id);
-            
+
             if (sysApp) {
                 sysApp.activate();
             } else {
                 item.appInfo.launch([], null);
             }
+        } else if (item.type === 'calc') {
+            St.Clipboard.get_default().set_text(St.ClipboardType.CLIPBOARD, item.result);
         }
     } catch (error) {
         console.error('Rudra launch error:', error);

@@ -3,6 +3,33 @@ import { searchApps } from './AppSearch.js';
 import { searchFiles } from './FileSearch.js';
 
 /**
+ * Attempts to evaluate a mathematical expression safely.
+ * Only allows digits, spaces, and arithmetic operators/parentheses.
+ * @param {string} query - The raw input text.
+ * @returns {number|null} The result, or null if not a valid math expression.
+ */
+function _tryCalculate(query) {
+    if (!/^[\d\s+\-*\/^%().]+$/.test(query)) {
+        return null;
+    }
+    if (!/[+\-*\/^%]/.test(query)) {
+        return null;
+    }
+    try {
+        let expr = query.replace(/\^/g, '**');
+        // eslint-disable-next-line no-new-func
+        let result = Function('"use strict"; return (' + expr + ')')();
+        if (!Number.isFinite(result)) {
+            return null;
+        }
+        return Math.round(result * 1e10) / 1e10;
+    } catch (e) {
+        return null;
+    }
+}
+
+
+/**
  * Parses the user's input query to determine the mode (App, File, Web, Command)
  * and fetches the corresponding results asynchronously.
  * @param {string} query - The raw input text from the search entry.
@@ -12,6 +39,19 @@ import { searchFiles } from './FileSearch.js';
 export function fetchResults(query, maxRes, callback) {
     if (!query) {
         callback([]);
+        return;
+    }
+
+    // Calculator Mode
+    let calcResult = _tryCalculate(query);
+    if (calcResult !== null) {
+        callback([{
+            type: 'calc',
+            name: String(calcResult),
+            description: query.trim() + ' = ' + calcResult,
+            icon: new Gio.ThemedIcon({ name: 'accessories-calculator-symbolic' }),
+            result: String(calcResult)
+        }]);
         return;
     }
 

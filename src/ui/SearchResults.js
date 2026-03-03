@@ -398,7 +398,7 @@ export class SearchResults {
         nameLabel.clutter_text.use_markup = true; 
         nameLabel.clutter_text.ellipsize = 3;
 
-        if (item.type === 'web' || item.type === 'command') {
+        if (item.type === 'web' || item.type === 'command' || item.type === 'calc') {
             nameLabel.clutter_text.set_text(item.name || '');
         } else {
             let markup = this._getHighlightMarkup(item.name || '', this._currentQuery);
