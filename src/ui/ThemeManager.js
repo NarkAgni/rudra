@@ -1,105 +1,131 @@
+/*
+ * Rudra GNOME Extension
+ * Copyright (C) 2026 NarkAgni
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import Mtk from 'gi://Mtk';
 import Pango from 'gi://Pango';
-import { hexToRgba } from '../core/utils.js';
 
 
-/**
- * Applies dynamic styles, colors, and fonts to the UI components based on user preferences.
- * @param {Object} settings - The GSettings object containing user preferences.
- * @param {Object} ui - The collection of Clutter/St actors to style.
- * @param {Object} ui.box - The main launcher container.
- * @param {Object} ui.entry - The search input field.
- * @param {Object} ui.hintLabel - The autocomplete hint label.
- * @param {Object} ui.resultsView - The SearchResults view instance.
- */
+export const RUDRA = {
+    bg: 'rgba(20, 20, 25, 0.95)',
+    shadow: 'none',
+    radius: 12,
+    textPrimary: '#e8e9f0',
+    textSecondary: 'rgba(255, 255, 255, 0.42)',
+    separator: 'rgba(255, 255, 255, 0.06)',
+    hoverColor: 'rgba(255, 255, 255, 0.055)',
+    selectionColor: 'rgba(99, 110, 143, 0.45)',
+    highlightColor: '#8b9fd4',
+    caretColor: '#8b9fd4',
+    refreshHover: 'rgba(255, 255, 255, 0.10)',
+    settingsIcon: 'rgba(255, 255, 255, 0.35)',
+};
+
 export function applyTheme(settings, ui) {
-    let marginTop = settings.get_int('margin-top');
-    let marginBottom = settings.get_int('margin-bottom');
-    let marginLeft = settings.get_int('margin-left');
-    let marginRight = settings.get_int('margin-right');
-    let cornerRadius = settings.get_int('corner-radius');
-
-    let bgHexColor = settings.get_string('background-color');
-    let bgOpacity = settings.get_int('background-opacity');
-    let backgroundColorString = hexToRgba(bgHexColor, bgOpacity); 
-
-    let fontName = settings.get_string('font-name');
-    let fontFamily = 'Sans';
-    let fontSizePt = 14;
-    let cssFontString = '';
+    let fontFamily = 'Cantarell';
+    let fontSizePt = 12;
 
     try {
-        let fontDescription = Pango.FontDescription.from_string(fontName);
-        fontFamily = fontDescription.get_family();
-        
-        let rawSize = fontDescription.get_size();
-        if (fontDescription.get_size_is_absolute()) {
-            fontSizePt = rawSize;
-        } else {
-            fontSizePt = rawSize / 1024;
+        const fontName = settings.get_string('font-name');
+        if (fontName) {
+            const fd = Pango.FontDescription.from_string(fontName);
+            const family = fd.get_family();
+            const size = fd.get_size_is_absolute() ? fd.get_size() : fd.get_size() / 1024;
+            if (family) fontFamily = family;
+            if (size > 0) fontSizePt = size;
         }
-        
-        cssFontString = `font-family: "${fontFamily}"; font-size: ${fontSizePt}pt;`;
-    } catch (error) {
-        cssFontString = 'font-family: "Sans"; font-size: 14pt;';
+    } catch (e) { }
+
+    const entryFontSizePt = fontSizePt + 5;
+    const cssFont = `font-family: "${fontFamily}"; font-size: ${fontSizePt}pt; color: ${RUDRA.textPrimary};`;
+
+    let borderWidth = 1;
+    let borderRgba = 'rgba(255,255,255,0.07)';
+    
+    let cornerRadius = 20;
+    try {
+        cornerRadius = settings.get_int('corner-radius');
+    } catch (e) { }
+
+    if (ui.tintBg) {
+        ui.tintBg.set_style(`
+            background-color: ${RUDRA.bg};
+            border: ${borderWidth}px solid ${borderRgba};
+            border-radius: ${cornerRadius}px;
+            box-shadow: ${RUDRA.shadow};
+            background-image: none;
+        `);
     }
 
-    if (ui.box) {
-        let boxStyle = `
-            margin-top: ${marginTop}px;
-            margin-bottom: ${marginBottom}px;
-            margin-left: ${marginLeft}px;
-            margin-right: ${marginRight}px;
-            background-color: ${backgroundColorString};
-            border-radius: ${cornerRadius}px;
-            ${cssFontString}
-        `;
-        ui.box.set_style(boxStyle);
+    if (ui.contentBox) {
+        ui.contentBox.set_style(`background-color: transparent; background-image: none; box-shadow: none; ${cssFont}`);
     }
 
     if (ui.entry) {
-        ui.entry.set_style(cssFontString);
+        ui.entry.set_style(`
+            font-family: "${fontFamily}";
+            font-size: ${entryFontSizePt}pt;
+            color: ${RUDRA.textPrimary};
+            caret-color: ${RUDRA.caretColor};
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            background-image: none;
+        `);
     }
-    
+
     if (ui.hintLabel) {
-        ui.hintLabel.set_style(`${cssFontString} color: #888888;`);
+        ui.hintLabel.set_style(`font-family: "${fontFamily}"; font-size: ${entryFontSizePt}pt; color: ${RUDRA.textSecondary}; background-color: transparent; background-image: none; box-shadow: none;`);
     }
-    
+
+    if (ui.separator) {
+        ui.separator.set_style(`background-color: ${RUDRA.separator}; background-image: none; box-shadow: none; height: 1px;`);
+    }
+
     if (ui.resultsView) {
         ui.resultsView.updateStyles(fontFamily, fontSizePt);
+        ui.resultsView.updateThemeColors({
+            selectionColor:   '#636e8f',
+            selectionOpacity: 115,
+            hoverColor:       '#ffffff',
+            hoverOpacity:     14,
+            highlightColor:   RUDRA.highlightColor,
+        });
     }
 }
 
+export function positionLauncherBox(mainBox, settings) {
+    if (!mainBox || !settings) return;
 
-/**
- * Positions the main launcher box precisely in the center of the active monitor.
- * @param {Object} box - The main Clutter actor to be positioned.
- */
-export function positionLauncherBox(box) {
-    if (!box) {
-        return;
-    }
-    
-    let pointerPosition = global.get_pointer();
-    let mouseX = pointerPosition[0];
-    let mouseY = pointerPosition[1];
-    
-    let monitorRect = new Mtk.Rectangle({ x: mouseX, y: mouseY, width: 1, height: 1 });
+    let boxWidth = 900;
+    try {
+        boxWidth = settings.get_int('launcher-width');
+    } catch (e) {}
+
+    mainBox.set_width(boxWidth);
+
+    const [mouseX, mouseY] = global.get_pointer();
+    const monitorRect = new Mtk.Rectangle({ x: mouseX, y: mouseY, width: 1, height: 1 });
     let monitorIndex = global.display.get_monitor_index_for_rect(monitorRect);
-    
-    if (monitorIndex < 0) {
-        monitorIndex = global.display.get_primary_monitor();
-    }
-    
-    let monitorGeometry = global.display.get_monitor_geometry(monitorIndex);
-    
-    let boxWidth = box.width;
-    if (!boxWidth) {
-        boxWidth = 660;
-    }
-    
-    let xPosition = Math.floor(monitorGeometry.x + (monitorGeometry.width - boxWidth) / 2);
-    let yPosition = 0;
-    
-    box.set_position(xPosition, yPosition);
+    if (monitorIndex < 0) monitorIndex = global.display.get_primary_monitor();
+
+    const geo = global.display.get_monitor_geometry(monitorIndex);
+    mainBox.set_position(
+        Math.floor(geo.x + (geo.width - boxWidth) / 2),
+        Math.floor(geo.y + geo.height * 0.25)
+    );
 }

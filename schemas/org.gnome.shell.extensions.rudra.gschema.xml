@@ -14,60 +14,8 @@
     </key>
 
     <key name="font-name" type="s">
-      <default>'Comic Sans MS 12'</default>
+      <default>'Sans 12'</default>
       <summary>Font family and size</summary>
-    </key>
-
-    <key name="background-color" type="s">
-      <default>'#02010E'</default>
-      <summary>Background color (hex)</summary>
-    </key>
-    
-    <key name="background-opacity" type="i">
-      <range min="0" max="255"/>
-      <default>175</default>
-      <summary>Background opacity</summary>
-    </key>
-
-    <key name="highlight-color" type="s">
-      <default>'#F7768E'</default>
-      <summary>Highlight color</summary>
-    </key>
-    
-    <key name="selection-color" type="s">
-      <default>'#970D0D'</default>
-      <summary>Selection color (RGBA Hex)</summary>
-    </key>
-
-    <key name="selection-opacity" type="i">
-        <range min="0" max="255"/>
-        <default>255</default>
-    </key>
-
-    <key name="hover-color" type="s">
-      <default>'#E01B24'</default>
-      <summary>Hover color (RGBA Hex)</summary>
-    </key>
-
-    <key name="hover-opacity" type="i">
-        <range min="0" max="255"/>
-        <default>50</default>
-    </key>
-
-    <key name="margin-top" type="i">
-      <default>250</default>
-    </key>
-
-    <key name="margin-bottom" type="i">
-      <default>0</default>
-    </key>
-    
-    <key name="margin-left" type="i">
-      <default>0</default>
-    </key>
-
-    <key name="margin-right" type="i">
-      <default>0</default>
     </key>
 
     <key name="max-results" type="i">
@@ -82,11 +30,44 @@
       <default>4</default>
     </key>
 
-    <key name="close-on-outside-click" type="b">
+    <key name="enable-fuzzy-search" type="b">
       <default>true</default>
-      <summary>Close on outside click</summary>
-      <description>Close the launcher when clicking outside the search box.</description>
+      <summary>Enable fuzzy search</summary>
     </key>
+
+    <key name="launcher-width" type="i">
+      <range min="400" max="1200"/>
+      <default>900</default>
+      <summary>Total width of the launcher</summary>
+    </key>
+
+    <key name="ai-provider" type="i">
+        <default>0</default>
+        <summary>AI Provider</summary>
+        <description>0 = Gemini, 1 = Groq, 2 = Ollama, 3 = Perplexity, 4 = Cohere</description>
+    </key>
+
+    <key name="ai-api-key-gemini" type="s"><default>""</default></key>
+    <key name="ai-api-key-groq" type="s"><default>""</default></key>
+    <key name="ai-api-key-perplexity" type="s"><default>""</default></key>
+    <key name="ai-api-key-cohere" type="s"><default>""</default></key>
+
+    <key name="search-history" type="as"><default>[]</default></key>
+    <key name="ai-chat-history" type="as"><default>[]</default></key>
+    
+    <key name="clipboard-history-size" type="i"><default>50</default></key>
+
+    <key name="trigger-ai" type="s"><default>'?'</default></key>
+    <key name="trigger-clipboard" type="s"><default>'cb'</default></key>
+    <key name="trigger-plugin" type="s"><default>'p'</default></key>
+    <key name="trigger-icon" type="s"><default>'ic'</default></key>
+    <key name="trigger-emoji" type="s"><default>'em'</default></key>
+    <key name="trigger-google" type="s"><default>'g'</default></key>
+    <key name="trigger-youtube" type="s"><default>'yt'</default></key>
+    <key name="trigger-ddg" type="s"><default>'ddg'</default></key>
+    <key name="trigger-wiki" type="s"><default>'w'</default></key>
+    <key name="trigger-perplexity" type="s"><default>'px'</default></key>
+    <key name="trigger-cohere" type="s"><default>'co'</default></key>
 
   </schema>
 </schemalist>

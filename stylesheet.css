@@ -1,19 +1,31 @@
+/*
+ * Rudra GNOME Extension
+ * Copyright (C) 2026 NarkAgni
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 /* ---------- OVERLAY ---------- */
 .launcher-overlay {
-    background-color: rgba(0, 0, 0, 0);
+    background-color: transparent;
 }
 
 /* ---------- MAIN BOX ---------- */
 .launcher-box {
     width: 660px;
-    border: 1px solid #3e4155;
     padding: 0px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85);
-}
-
-/* ---------- HEADER ---------- */
-.launcher-header {
-    padding-right: 15px;
+    box-shadow: none;
 }
 
 /* ---------- SEARCH ENTRY ---------- */
@@ -41,17 +53,6 @@
     background-color: transparent;
 }
 
-/* ---------- SETTINGS ICON ---------- */
-.settings-icon {
-    icon-size: 24px;
-    width: 24px;
-    height: 24px;
-    color: #aaaaaa;
-}
-.settings-icon:hover {
-    color: #ffffff;
-}
-
 /* ---------- SEPARATOR ---------- */
 .launcher-separator {
     background-color: #3e4155;
@@ -70,13 +71,22 @@
 
 /* ---------- RESULT ITEM ---------- */
 .result-item {
-    background-color: transparent;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: none !important;
     border-radius: 8px;
     padding: 0px;
 }
 
-.result-item:hover {
-    background-color: #3d59a1;
+.result-item:hover,
+.result-item:focus,
+.result-item:selected,
+.result-item:active {
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 
 .result-row {
@@ -105,4 +115,229 @@
 .result-desc {
     font-size: 13px;
     color: #aaaaaa;
+}
+
+/* ---------- THE ULTIMATE ADWAITA KILLER ---------- */
+.rudra-entry-clear,
+.rudra-entry-clear:focus,
+.rudra-entry-clear:hover,
+.rudra-entry-clear:active {
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.rudra-hint-label {
+    font-size: 12pt;
+    font-weight: normal;
+    padding-left: 12px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.rudra-list-clear,
+.rudra-list-clear:focus,
+.rudra-list-clear:hover,
+.rudra-list-clear:selected {
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.rudra-scroll-clear {
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.rudra-scroll-clear StScrollBar {
+    padding: 0px 3px 10px 0px;
+}
+
+.rudra-scroll-clear StScrollBar StBin#trough {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 4px;
+    margin-bottom: 10px;
+}
+
+.rudra-scroll-clear StScrollBar StButton#vhandle {
+    background-color: rgba(255, 255, 255, 0.22);
+    border-radius: 4px;
+    width: 4px;
+    min-height: 24px;
+    border: none;
+    box-shadow: none;
+}
+
+.rudra-scroll-clear .scrollbar {
+    padding: 0px 3px 10px 0px;
+}
+
+.rudra-scroll-clear .scrollbar .trough {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 4px;
+    margin-bottom: 10px;
+}
+
+.rudra-scroll-clear .scrollbar .slider {
+    background-color: rgba(255, 255, 255, 0.22);
+    border-radius: 4px;
+    width: 4px;
+    min-height: 24px;
+    border: none;
+    box-shadow: none;
+}
+
+
+/* --- 1. HEADER BUTTONS --- */
+.rudra-header-btn {
+    border-radius: 8px; padding: 6px 10px; margin-right: 8px; background-color: transparent; transition-duration: 200ms;
+}
+.rudra-header-btn:hover, .rudra-header-btn:focus { background-color: rgba(255, 255, 255, 0.08); }
+
+.rudra-cat-btn {
+    border-radius: 8px; padding: 6px 12px; margin-left: 10px; background-color: rgba(255, 255, 255, 0.06); transition-duration: 200ms;
+}
+.rudra-cat-btn:hover, .rudra-cat-btn:focus { background-color: rgba(255, 255, 255, 0.12); }
+
+
+/* --- 2. DROPDOWN MENUS --- */
+.rudra-dropdown-menu {
+    background-color: rgba(24, 24, 24, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 8px 0px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.rudra-dropdown-menu-tag { padding: 10px; width: 250px; }
+
+.rudra-menu-search {
+    border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+    background-color: rgba(255, 255, 255, 0.06); color: #ffffff; font-size: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.rudra-menu-search:focus { border: 1px solid rgba(255, 255, 255, 0.2); background-color: rgba(255, 255, 255, 0.09); }
+
+.rudra-menu-item {
+    padding: 10px 16px; border-radius: 8px; background-color: transparent; transition-duration: 150ms; margin-bottom: 2px;
+}
+.rudra-menu-item:hover, .rudra-menu-item:focus { background-color: rgba(255, 255, 255, 0.1); }
+
+.rudra-menu-label { color: #ffffff; font-size: 15px; }
+.rudra-menu-label-bold { color: #ffffff; font-size: 15px; font-weight: bold; }
+
+
+/* --- 3. FORMS (Snippets & Plugins) --- */
+.rudra-form-box { padding: 16px 20px; }
+.rudra-form-title-row { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.rudra-form-title { font-size: 16pt; font-weight: bold; color: #ffffff; }
+
+/* Form Back Button */
+.rudra-back-btn {
+    border-radius: 8px; padding: 8px 12px; background-color: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); transition-duration: 200ms;
+}
+.rudra-back-btn:hover { background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); }
+
+/* Form Labels & Entries */
+.rudra-form-label { font-size: 9pt; font-weight: bold; color: rgba(255, 255, 255, 0.5); margin-bottom: 6px; letter-spacing: 1.5px; }
+
+.rudra-form-entry {
+    border-radius: 10px; padding: 12px 16px; background-color: rgba(255, 255, 255, 0.06);
+    color: #ffffff; font-size: 13pt; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.08); transition-duration: 200ms;
+}
+.rudra-form-entry:focus { border: 1px solid rgba(255, 255, 255, 0.2); background-color: rgba(255, 255, 255, 0.09); }
+
+/* Code Editor */
+.rudra-editor-wrapper {
+    border-radius: 10px; background-color: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 16px; min-height: 180px;
+}
+.rudra-editor-entry {
+    background-color: transparent; border: none; color: #ffffff; font-size: 12pt; padding: 12px 14px; font-family: "Monospace";
+    caret-color: #7aa2f7;
+}
+.rudra-editor-entry:focus { border: none; box-shadow: none; }
+
+
+/* --- 4. ACTION BUTTONS --- */
+.rudra-btn-cancel {
+    border-radius: 10px; padding: 10px 24px; background-color: rgba(255, 255, 255, 0.08); color: #ffffff; font-size: 12pt; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.1); margin-right: 12px; transition-duration: 200ms;
+}
+.rudra-btn-cancel:hover { background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.2); }
+
+.rudra-btn-delete {
+    border-radius: 10px; padding: 10px 20px; background-color: rgba(239, 68, 68, 0.12); color: #f87171; font-size: 12pt; font-weight: bold; border: 1px solid rgba(239, 68, 68, 0.25); transition-duration: 200ms;
+}
+.rudra-btn-delete:hover { background-color: rgba(239, 68, 68, 0.25); border: 1px solid rgba(239, 68, 68, 0.4); color: #ffaaaa; }
+
+.rudra-btn-save-base {
+    border-radius: 10px; padding: 10px 24px; color: #ffffff; font-size: 12pt; font-weight: bold; border: 1px solid rgba(255, 255, 255, 0.1); transition-duration: 200ms;
+}
+.rudra-btn-save-base:hover {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15));
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+
+/* --- 5. ICON/EMOJI PICKER & TABS --- */
+.rudra-icon-btn {
+    padding: 12px 16px; background-color: rgba(255, 255, 255, 0.06); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08); transition-duration: 200ms;
+}
+.rudra-icon-btn:hover { background-color: rgba(255, 255, 255, 0.15); }
+
+.rudra-icon-picker {
+    background-color: rgba(0, 0, 0, 0.25); border-radius: 12px; padding: 12px; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rudra-tab-active { padding: 8px 16px; border-radius: 8px; background-color: rgba(255, 255, 255, 0.15); font-weight: bold; font-size: 11pt; color: #ffffff; margin-right: 8px; transition-duration: 150ms; }
+.rudra-tab-inactive { padding: 8px 16px; border-radius: 8px; background-color: rgba(255, 255, 255, 0.05); font-size: 11pt; color: rgba(255, 255, 255, 0.7); margin-right: 8px; transition-duration: 150ms; }
+.rudra-tab-inactive:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+.rudra-picker-item { padding: 10px 0; border-radius: 8px; margin-right: 6px; background-color: rgba(255, 255, 255, 0.05); transition-duration: 150ms; }
+.rudra-picker-item:hover { background-color: rgba(255, 255, 255, 0.15); }
+
+/* --- 6. GUIDE / HELP SCREEN --- */
+.rudra-guide-wrapper {
+    border-radius: 10px; background-color: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 16px; padding: 16px;
+}
+.rudra-guide-text { color: #cccccc; font-size: 12pt; line-height: 1.6; }
+
+StScrollBar {
+    padding: 0px 2px;
+    min-width: 8px;
+    width: 8px;
+}
+
+StScrollBar StBin#trough {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 4px;
+    width: 4px;
+    min-width: 4px;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+StScrollBar StButton#vhandle {
+    background-color: rgba(255, 255, 255, 0.35) !important;
+    border-radius: 4px;
+    width: 4px;
+    min-width: 4px;
+    min-height: 20px;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+StScrollBar StButton#vhandle:hover {
+    background-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.rudra-grid-focus {
+    border-bottom: 1px solid rgba(122, 162, 247, 0.4) !important;
 }

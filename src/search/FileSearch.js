@@ -1,16 +1,27 @@
+/*
+ * Rudra GNOME Extension
+ * Copyright (C) 2026 NarkAgni
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 
 
 let _searchCancellable = null;
 
-
-/**
- * Searches for files recursively in the user's home directory.
- * @param {string} text - The search query (must start with '.').
- * @param {function(Array<Object>)} callback - The function to call with the search results.
- * @param {number} [limit=50] - The maximum number of files to return.
- */
 export function searchFiles(text, callback, limit = 50) {
     if (!text || !text.startsWith('.')) {
         callback([]);
@@ -37,16 +48,20 @@ export function searchFiles(text, callback, limit = 50) {
     const results = [];
     let pending = 0;
     let finished = false;
-    
 
-    /**
-     * Completes the search and triggers the callback.
-     * @private
-     */
+    const safetyTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 8000, () => {
+        if (!finished) {
+            console.warn('Rudra FileSearch: safety timeout triggered, forcing done()');
+            done();
+        }
+        return GLib.SOURCE_REMOVE;
+    });
+
     function done() {
         if (finished) {
             return;
         }
+        GLib.source_remove(safetyTimeoutId);
         if (_searchCancellable === cancellable) {
             _searchCancellable = null;
         }
@@ -54,13 +69,6 @@ export function searchFiles(text, callback, limit = 50) {
         callback(results);
     }
 
-
-    /**
-     * Scans a directory asynchronously.
-     * @param {Gio.File} dir - The directory file object to scan.
-     * @param {number} depth - Current folder depth (stops at 3).
-     * @private
-     */
     function scanDir(dir, depth) {
         if (depth > 3 || cancellable.is_cancelled() || results.length >= limit) {
             return;
@@ -89,14 +97,6 @@ export function searchFiles(text, callback, limit = 50) {
         );
     }
 
-
-    /**
-     * Reads a batch of files from the directory enumerator.
-     * @param {Gio.FileEnumerator} enumerator - The enumerator object.
-     * @param {Gio.File} parentDir - The parent directory.
-     * @param {number} depth - The current depth.
-     * @private
-     */
     function readBatch(enumerator, parentDir, depth) {
         if (cancellable.is_cancelled() || results.length >= limit) {
             enumerator.close_async(GLib.PRIORITY_DEFAULT, null, null);
@@ -164,13 +164,15 @@ export function searchFiles(text, callback, limit = 50) {
         });
     }
 
+    if (!homeDir.query_exists(null)) {
+        GLib.source_remove(safetyTimeoutId);
+        callback([]);
+        return;
+    }
+
     scanDir(homeDir, 0);
 }
 
-
-/**
- * Cleans up the file search operations to prevent memory leaks.
- */
 export function cleanupFileSearch() {
     if (_searchCancellable) {
         _searchCancellable.cancel();

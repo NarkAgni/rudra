@@ -1,22 +1,34 @@
+/*
+ * Rudra GNOME Extension
+ * Copyright (C) 2026 NarkAgni
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
-import { LauncherUI } from './src/ui/LauncherUI.js';
-import { cleanupAppSearch } from './src/core/AppSearch.js';
-import { cleanupFileSearch } from './src/core/FileSearch.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 
+import { LauncherUI } from './src/ui/LauncherUI.js';
+import { cleanupAppSearch } from './src/search/AppSearch.js';
+import { cleanupFileSearch } from './src/search/FileSearch.js';
+import { SnippetManager } from './src/services/SnippetManager.js';
+import { ClipboardManager } from './src/services/ClipboardManager.js';
 
-/**
- * The main extension class for Rudra Keyboard Launcher.
- * Controls the initialization and destruction of the extension instance.
- */
+
 export default class KeyboardLauncher extends Extension {
-
-    /**
-     * Called when the extension is enabled.
-     * Initializes settings, the UI, and binds the global shortcut.
-     */
     enable() {
         this._settings = this.getSettings();
         
@@ -34,14 +46,11 @@ export default class KeyboardLauncher extends Extension {
         });
     }
 
-
-    /**
-     * Binds the global toggle shortcut using the GNOME Window Manager.
-     * Removes the previous binding before applying the new one.
-     * @private
-     */
     _bindKey() {
-        Main.wm.removeKeybinding('toggle-launcher');
+        if (this._keybindingBound) {
+            Main.wm.removeKeybinding('toggle-launcher');
+            this._keybindingBound = false;
+        }
         
         Main.wm.addKeybinding(
             'toggle-launcher',
@@ -52,20 +61,20 @@ export default class KeyboardLauncher extends Extension {
                 this._ui.toggle(); 
             }
         );
+
+        this._keybindingBound = true; 
     }
 
-
-    /**
-     * Called when the extension is disabled.
-     * Cleans up all UI elements, settings connections, keybindings, and search caches.
-     */
     disable() {
         if (this._settingsChangedId) {
             this._settings.disconnect(this._settingsChangedId);
             this._settingsChangedId = null;
         }
         
-        Main.wm.removeKeybinding('toggle-launcher');
+        if (this._keybindingBound) {
+            Main.wm.removeKeybinding('toggle-launcher');
+            this._keybindingBound = false;
+        }
 
         if (this._ui) {
             this._ui.destroy();
@@ -76,5 +85,7 @@ export default class KeyboardLauncher extends Extension {
         
         cleanupAppSearch();
         cleanupFileSearch();
+        ClipboardManager.destroy();
+        SnippetManager.destroy();
     }
-}
+} 

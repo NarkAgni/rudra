@@ -1,15 +1,21 @@
-/**
- * Utility functions for formatting and parsing data.
- * @module core/utils
+/*
+ * Rudra GNOME Extension
+ * Copyright (C) 2026 NarkAgni
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
- * Converts a HEX color code to an RGBA string format for Clutter styling.
- * @param {string} hex - The hex color string (e.g., '#ffffff' or '#fff').
- * @param {number} alphaInt - The alpha transparency value (0 to 255).
- * @param {string} [fallbackRgb='30, 30, 30'] - Fallback RGB values if hex is invalid.
- * @returns {string} The formatted 'rgba(r, g, b, a)' string.
- */
 export function hexToRgba(hex, alphaInt, fallbackRgb = '30, 30, 30') {
     let alpha = (alphaInt / 255).toFixed(2);
     
@@ -34,12 +40,6 @@ export function hexToRgba(hex, alphaInt, fallbackRgb = '30, 30, 30') {
     return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-
-/**
- * Escapes special characters in a string for safe Pango markup rendering.
- * @param {string} str - The raw string to escape.
- * @returns {string} The safely escaped markup string.
- */
 export function escapeMarkup(str) {
     if (!str) {
         return '';

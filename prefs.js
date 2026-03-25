@@ -1,410 +1,282 @@
+/*
+ * Rudra GNOME Extension
+ * Copyright (C) 2026 NarkAgni
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import Pango from 'gi://Pango';
-import { showKeybindingDialog } from './src/prefs/ShortcutDialog.js';
-import { makeResetBtn, makeGroupResetBtn } from './src/prefs/PrefsUtils.js';
 import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+import { showKeybindingDialog } from './src/prefs/ShortcutDialog.js';
 
-/**
- * The main preferences window controller for the Rudra extension.
- */
+
 export default class RudraPreferences extends ExtensionPreferences {
 
-    /**
-     * Automatically called by GNOME Shell to build the preferences window.
-     * @param {Adw.PreferencesWindow} window - The root preferences window.
-     */
     fillPreferencesWindow(window) {
-        const settings = this.getSettings();
-        this._buildSettingsPage(window, settings);
-        this._buildAboutPage(window);
-    }
+        this._settingsSignals = [];
+        this.settings = this.getSettings();
 
+        window.add(this._createGeneralPage(window));
+        window.add(this._createAppearancePage());
+        window.add(this._createTriggersPage());
+        window.add(this._createAIPage());
+        window.add(this._createAboutPage(window));
 
-    /**
-     * Builds the main settings page.
-     * @param {Adw.PreferencesWindow} window - The parent window.
-     * @param {Gio.Settings} settings - The settings object.
-     * @private
-     */
-    _buildSettingsPage(window, settings) {
-        const page = new Adw.PreferencesPage({ 
-            title: 'Settings', 
-            icon_name: 'preferences-system-symbolic' 
+        window.connect('destroy', () => {
+            this._settingsSignals.forEach(id => this.settings.disconnect(id));
+            this._settingsSignals = [];
         });
-        window.add(page);
-
-        this._buildShortcutsGroup(page, window, settings);
-        this._buildAppearanceGroup(page, settings);
-        this._buildColorsExpander(page, settings);
-        this._buildMarginsExpander(page, settings);
-        this._buildSearchExpander(page, settings);
     }
 
+    _createGeneralPage(window) {
+        const page = new Adw.PreferencesPage({ title: 'General', icon_name: 'preferences-system-symbolic' });
 
-    /**
-     * Builds the keyboard shortcut configuration section.
-     * @param {Adw.PreferencesPage} page - The settings page.
-     * @param {Adw.PreferencesWindow} window - The parent window for dialogs.
-     * @param {Gio.Settings} settings - The settings object.
-     * @private
-     */
-    _buildShortcutsGroup(page, window, settings) {
-        const group = new Adw.PreferencesGroup({ title: 'Shortcuts' });
+        const shortcutGroup = new Adw.PreferencesGroup({ title: 'Shortcuts' });
+
+        const shortcutRow = new Adw.ActionRow({
+            title: 'Toggle Rudra',
+            subtitle: 'Shortcut to open and close the launcher',
+            icon_name: 'input-keyboard-symbolic'
+        });
+        const shortcutLabel = new Gtk.ShortcutLabel({ disabled_text: 'Disabled', valign: Gtk.Align.CENTER });
+        shortcutLabel.set_accelerator(this.settings.get_strv('toggle-launcher')[0] || '');
+        this._bindSignal('toggle-launcher', () =>
+            shortcutLabel.set_accelerator(this.settings.get_strv('toggle-launcher')[0] || ''));
+        const editBtn = new Gtk.Button({
+            icon_name: 'document-edit-symbolic', valign: Gtk.Align.CENTER,
+            css_classes: ['flat', 'circular'], tooltip_text: 'Edit Shortcut'
+        });
+        editBtn.connect('clicked', () => showKeybindingDialog(window, this.settings));
+        shortcutRow.add_suffix(shortcutLabel);
+        shortcutRow.add_suffix(editBtn);
+        shortcutGroup.add(shortcutRow);
+
+        page.add(shortcutGroup);
+
+        const searchGroup = new Adw.PreferencesGroup({ title: 'Search' });
+        const fuzzyRow = new Adw.SwitchRow({
+            title: 'Fuzzy Search', subtitle: 'Finds apps even with typos', icon_name: 'edit-find-symbolic'
+        });
+        this.settings.bind('enable-fuzzy-search', fuzzyRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        searchGroup.add(fuzzyRow);
+        this._addSpinRow(searchGroup, 'max-results', 'Max Results', 'Maximum results to fetch', 'view-list-symbolic', 1, 50);
+        this._addSpinRow(searchGroup, 'visible-results', 'Visible Rows', 'Rows shown before scrolling', 'format-justify-fill-symbolic', 1, 20);
+        this._addSpinRow(searchGroup, 'clipboard-history-size', 'Clipboard History Size', 'Number of items to keep in history', 'edit-paste-symbolic', 10, 500, 10);
+        page.add(searchGroup);
+
+        return page;
+    }
+
+    _createTriggersPage() {
+        const page = new Adw.PreferencesPage({ title: 'Triggers', icon_name: 'terminal-symbolic' });
+        const group = new Adw.PreferencesGroup({ title: 'Custom Commands', description: 'Change the prefix used to trigger features. (Must be unique!)' });
+
+        const triggers = [
+            { key: 'trigger-ai', title: 'Ask AI' },
+            { key: 'trigger-clipboard', title: 'Clipboard History' },
+            { key: 'trigger-plugin', title: 'Plugins' },
+            { key: 'trigger-icon', title: 'Icon Browser' },
+            { key: 'trigger-emoji', title: 'Emoji Browser' },
+            { key: 'trigger-google', title: 'Google Search' },
+            { key: 'trigger-youtube', title: 'YouTube Search' },
+            { key: 'trigger-ddg', title: 'DuckDuckGo Search' },
+            { key: 'trigger-wiki', title: 'Wikipedia Search' },
+            { key: 'trigger-perplexity', title: 'Perplexity Search' },
+            { key: 'trigger-cohere', title: 'Cohere Search' }
+        ];
+
+        let rows = [];
+
+        const validateTriggers = () => {
+            let values = triggers.map(t => this.settings.get_string(t.key).trim());
+            rows.forEach((row, idx) => {
+                let val = values[idx];
+                if (!val) { row.add_css_class('error'); return; }
+                let count = values.filter(v => v === val).length;
+                if (count > 1) {
+                    row.add_css_class('error');
+                } else {
+                    row.remove_css_class('error');
+                }
+            });
+        };
+
+        triggers.forEach(t => {
+            const row = new Adw.EntryRow({ title: t.title });
+            this.settings.bind(t.key, row, 'text', Gio.SettingsBindFlags.DEFAULT);
+            row.connect('changed', validateTriggers);
+            row.add_suffix(this._makeResetBtn(t.key));
+            group.add(row);
+            rows.push(row);
+        });
+
+        validateTriggers();
         page.add(group);
-
-        const row = new Adw.ActionRow({ 
-            title: 'Toggle Rudra', 
-            subtitle: 'Shortcut to open/close the launcher', 
-            icon_name: 'input-keyboard-symbolic' 
-        });
-        
-        const shortcutLabel = new Gtk.ShortcutLabel({ 
-            disabled_text: 'Disabled', 
-            valign: Gtk.Align.CENTER 
-        });
-        shortcutLabel.set_accelerator(settings.get_strv('toggle-launcher')[0] || '');
-        
-        settings.connect('changed::toggle-launcher', () => {
-            shortcutLabel.set_accelerator(settings.get_strv('toggle-launcher')[0] || '');
-        });
-
-        const editBtn = new Gtk.Button({ 
-            icon_name: 'document-edit-symbolic', 
-            valign: Gtk.Align.CENTER, 
-            css_classes: ['flat', 'circular'], 
-            tooltip_text: 'Edit Shortcut' 
-        });
-        editBtn.connect('clicked', () => {
-            showKeybindingDialog(window, settings);
-        });
-
-        row.add_suffix(shortcutLabel); 
-        row.add_suffix(editBtn); 
-        group.add(row);
-
-        const rowOutsideClick = new Adw.SwitchRow({
-            title: 'Close on Outside Click',
-            subtitle: 'Close the launcher when clicking outside the window',
-            icon_name: 'pointer-primary-symbolic'
-        });
-        
-        settings.bind('close-on-outside-click', rowOutsideClick, 'active', Gio.SettingsBindFlags.DEFAULT);
-        group.add(rowOutsideClick);
+        return page;
     }
 
+    _createAppearancePage() {
+        const page = new Adw.PreferencesPage({ title: 'Appearance', icon_name: 'preferences-desktop-appearance-symbolic' });
 
-    /**
-     * Builds the font and corner radius settings section.
-     * @param {Adw.PreferencesPage} page - The settings page.
-     * @param {Gio.Settings} settings - The settings object.
-     * @private
-     */
-    _buildAppearanceGroup(page, settings) {
-        const group = new Adw.PreferencesGroup({ title: 'Appearance' });
-        page.add(group);
+        const typographyGroup = new Adw.PreferencesGroup({
+            title: 'Typography',
+            description: 'Font used for result titles and descriptions'
+        });
 
-        const rowFont = new Adw.ActionRow({ 
-            title: 'Font Family', 
-            subtitle: 'Choose the typeface', 
-            icon_name: 'preferences-desktop-font-symbolic' 
+        const rowFont = new Adw.ActionRow({
+            title: 'Font Family', subtitle: 'Typeface for result text',
+            icon_name: 'preferences-desktop-font-symbolic'
         });
         const fontDialog = new Gtk.FontDialog();
-        const fontBtn = new Gtk.FontDialogButton({ 
-            dialog: fontDialog, 
-            valign: Gtk.Align.CENTER, 
-            use_font: true, 
-            use_size: false 
+        const fontBtn = new Gtk.FontDialogButton({
+            dialog: fontDialog, valign: Gtk.Align.CENTER, use_font: true, use_size: false
         });
-        rowFont.add_suffix(fontBtn); 
-        group.add(rowFont);
+        rowFont.add_suffix(fontBtn);
+        typographyGroup.add(rowFont);
 
-        const rowFontSize = new Adw.SpinRow({ 
+        const rowFontSize = new Adw.ActionRow({
             title: 'Font Size', 
-            subtitle: 'Adjust text size', 
-            icon_name: 'format-text-bold-symbolic', 
-            adjustment: new Gtk.Adjustment({ lower: 8, upper: 64, step_increment: 1 }) 
+            subtitle: 'Size of result text in points',
+            icon_name: 'font-select-symbolic'
         });
+
+        const fontSizeSpin = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({ lower: 8, upper: 32, step_increment: 1 }),
+            numeric: true, 
+            valign: Gtk.Align.CENTER
+        });
+        rowFontSize.add_suffix(fontSizeSpin);
 
         let isInternalUpdate = false;
-        
+
         const syncFontUI = () => {
             isInternalUpdate = true;
-            const desc = Pango.FontDescription.from_string(settings.get_string('font-name') || 'Sans 14');
+            const raw = this.settings.get_string('font-name') || 'Cantarell 13';
+            const desc = Pango.FontDescription.from_string(raw);
             fontBtn.set_font_desc(desc);
-            
-            if (desc.get_size_is_absolute()) {
-                rowFontSize.set_value(desc.get_size());
-            } else {
-                rowFontSize.set_value(desc.get_size() / 1024);
-            }
+            const sizePt = desc.get_size_is_absolute() ? desc.get_size() : desc.get_size() / 1024;
+            fontSizeSpin.set_value(sizePt > 0 ? sizePt : 13);
             isInternalUpdate = false;
         };
 
         const saveFont = () => {
-            if (isInternalUpdate === true) {
-                return;
-            }
-            let desc = fontBtn.get_font_desc() || Pango.FontDescription.from_string('Sans 14');
-            desc.set_size(rowFontSize.get_value() * 1024);
-            settings.set_string('font-name', desc.to_string());
+            if (isInternalUpdate) return;
+            let desc = fontBtn.get_font_desc();
+            if (!desc) desc = Pango.FontDescription.from_string('Cantarell 13');
+            desc.set_size(Math.round(fontSizeSpin.get_value()) * 1024);
+            this.settings.set_string('font-name', desc.to_string());
         };
 
         syncFontUI();
-        settings.connect('changed::font-name', syncFontUI);
+        this._bindSignal('font-name', syncFontUI);
         fontBtn.connect('notify::font-desc', saveFont);
-        rowFontSize.connect('notify::value', saveFont);
-        rowFontSize.add_suffix(makeResetBtn(settings, 'font-name'));
-        group.add(rowFontSize);
-
-        const rowRadius = new Adw.SpinRow({ 
-            title: 'Corner Roundness', 
-            icon_name: 'object-select-symbolic', 
-            adjustment: new Gtk.Adjustment({ lower: 0, upper: 50, step_increment: 1 }) 
-        });
-        settings.bind('corner-radius', rowRadius, 'value', 0);
-        rowRadius.add_suffix(makeResetBtn(settings, 'corner-radius'));
-        group.add(rowRadius);
-    }
-
-
-    /**
-     * Builds the colors and opacity settings inside an expander row.
-     * @param {Adw.PreferencesPage} page - The settings page.
-     * @param {Gio.Settings} settings - The settings object.
-     * @private
-     */
-    _buildColorsExpander(page, settings) {
-        const group = new Adw.PreferencesGroup();
-        page.add(group);
-        const keys = [
-            'background-color', 'background-opacity', 'highlight-color', 
-            'selection-color', 'selection-opacity', 'hover-color', 'hover-opacity'
-        ];
-
-        const expander = new Adw.ExpanderRow({ 
-            title: 'Background &amp; Highlights', 
-            icon_name: 'preferences-desktop-wallpaper-symbolic', 
-            subtitle: 'Configure colors and opacity', 
-            show_enable_switch: false 
-        });
-        expander.add_suffix(makeGroupResetBtn(settings, keys));
-        group.add(expander);
-
-        this._addColorRow(expander, settings, 'background-color', 'Background Color', 'format-fill-color-symbolic');
-
-        const rowBgOpacity = new Adw.SpinRow({ 
-            title: 'Background Opacity', 
-            subtitle: '0 = Invisible, 255 = Opaque', 
-            icon_name: 'image-filter-symbolic', 
-            adjustment: new Gtk.Adjustment({ lower: 0, upper: 255, step_increment: 5, page_increment: 10 }) 
-        });
-        settings.bind('background-opacity', rowBgOpacity, 'value', 0);
-        rowBgOpacity.add_suffix(makeResetBtn(settings, 'background-opacity'));
-        expander.add_row(rowBgOpacity);
-
-        this._addColorRow(expander, settings, 'highlight-color', 'Highlight Color', 'format-text-color-symbolic');
-        this._addColorWithOpacityRows(expander, settings, 'selection-color', 'selection-opacity', 'Selection Background', 'view-paged-symbolic');
-        this._addColorWithOpacityRows(expander, settings, 'hover-color', 'hover-opacity', 'Hover Background', 'input-mouse-symbolic');
-    }
-
-
-    /**
-     * Builds the screen margins settings inside an expander row.
-     * @param {Adw.PreferencesPage} page - The settings page.
-     * @param {Gio.Settings} settings - The settings object.
-     * @private
-     */
-    _buildMarginsExpander(page, settings) {
-        const group = new Adw.PreferencesGroup();
-        page.add(group);
-        const keys = ['margin-top', 'margin-bottom', 'margin-left', 'margin-right'];
-
-        const expander = new Adw.ExpanderRow({ 
-            title: 'Screen Position', 
-            icon_name: 'view-restore-symbolic', 
-            subtitle: 'Adjust distance from screen edges', 
-            show_enable_switch: false 
-        });
-        expander.add_suffix(makeGroupResetBtn(settings, keys));
-        group.add(expander);
-
-        const addRow = (label, key, icon) => {
-            const row = new Adw.SpinRow({ 
-                title: label, 
-                icon_name: icon, 
-                adjustment: new Gtk.Adjustment({ lower: 0, upper: 2000, step_increment: 10 }) 
-            });
-            settings.bind(key, row, 'value', 0);
-            row.add_suffix(makeResetBtn(settings, key));
-            return row;
-        };
-
-        expander.add_row(addRow('Top', 'margin-top', 'go-up-symbolic'));
-        expander.add_row(addRow('Bottom', 'margin-bottom', 'go-down-symbolic'));
-        expander.add_row(addRow('Left', 'margin-left', 'go-previous-symbolic'));
-        expander.add_row(addRow('Right', 'margin-right', 'go-next-symbolic'));
-    }
-
-
-    /**
-     * Builds the search behavior settings inside an expander row.
-     * @param {Adw.PreferencesPage} page - The settings page.
-     * @param {Gio.Settings} settings - The settings object.
-     * @private
-     */
-    _buildSearchExpander(page, settings) {
-        const group = new Adw.PreferencesGroup();
-        page.add(group);
-        const keys = ['max-results', 'visible-results', 'result-spacing'];
-
-        const expander = new Adw.ExpanderRow({ 
-            title: 'Results &amp; Spacing', 
-            icon_name: 'system-search-symbolic', 
-            subtitle: 'Configure max results and spacing', 
-            show_enable_switch: false 
-        });
-        expander.add_suffix(makeGroupResetBtn(settings, keys));
-        group.add(expander);
-
-        const addRow = (label, key, max, icon) => {
-            const row = new Adw.SpinRow({ 
-                title: label, 
-                icon_name: icon, 
-                adjustment: new Gtk.Adjustment({ lower: 0, upper: max, step_increment: 1 }) 
-            });
-            settings.bind(key, row, 'value', 0);
-            row.add_suffix(makeResetBtn(settings, key));
-            return row;
-        };
-
-        expander.add_row(addRow('Max Results', 'max-results', 50, 'view-list-symbolic'));
-        expander.add_row(addRow('Visible Rows', 'visible-results', 20, 'format-justify-fill-symbolic'));
-        expander.add_row(addRow('Item Spacing', 'result-spacing', 50, 'format-indent-more-symbolic'));
-    }
-
-
-    /**
-     * Helper to create a solid color picker row.
-     * @param {Adw.ExpanderRow} parent - The parent container.
-     * @param {Gio.Settings} settings - The settings object.
-     * @param {string} key - The settings key.
-     * @param {string} title - The row title.
-     * @param {string} icon - The icon name.
-     * @private
-     */
-    _addColorRow(parent, settings, key, title, icon) {
-        const row = new Adw.ActionRow({ title, icon_name: icon });
-        const rgba = new Gdk.RGBA();
         
-        if (!rgba.parse(settings.get_string(key))) {
-            rgba.parse('#ffffff');
-        }
-
-        const colorButton = new Gtk.ColorDialogButton({ 
-            dialog: new Gtk.ColorDialog(), 
-            rgba: rgba, 
-            valign: Gtk.Align.CENTER 
-        });
+        fontSizeSpin.connect('notify::value', saveFont);
         
-        colorButton.connect('notify::rgba', () => {
-            const color = colorButton.get_rgba();
-            const toHex = (n) => Math.round(n * 255).toString(16).padStart(2, '0');
-            settings.set_string(key, `#${toHex(color.red)}${toHex(color.green)}${toHex(color.blue)}`);
-        });
+        rowFontSize.add_suffix(this._makeResetBtn('font-name'));
+        typographyGroup.add(rowFontSize);
+        page.add(typographyGroup);
 
-        settings.connect(`changed::${key}`, () => {
-            const newRgba = new Gdk.RGBA();
-            if (newRgba.parse(settings.get_string(key))) {
-                colorButton.set_rgba(newRgba);
-            }
+        const layoutGroup = new Adw.PreferencesGroup({
+            title: 'Layout', description: 'Size and spacing of the launcher window'
         });
+        this._addSpinRow(layoutGroup, 'launcher-width', 'Launcher Width', 'Width of the launcher in pixels', 'view-fullscreen-symbolic', 400, 1400, 10);
+        this._addSpinRow(layoutGroup, 'corner-radius', 'Corner Radius', 'Roundness of launcher corners', 'computer-apple-ipad-symbolic', 0, 60);
+        this._addSpinRow(layoutGroup, 'result-spacing', 'Item Spacing', 'Vertical space between result rows', 'format-indent-more-symbolic', 0, 20);
+        page.add(layoutGroup);
 
-        row.add_suffix(colorButton); 
-        parent.add_row(row);
+        return page;
     }
 
+    _createAIPage() {
+        const page = new Adw.PreferencesPage({ title: 'AI Assistant', icon_name: 'system-run-symbolic' });
 
-    /**
-     * Helper to create a color picker row with an attached opacity slider.
-     * @param {Adw.ExpanderRow} parent - The parent container.
-     * @param {Gio.Settings} settings - The settings object.
-     * @param {string} colorKey - The color settings key.
-     * @param {string} opacityKey - The opacity settings key.
-     * @param {string} title - The row title.
-     * @param {string} icon - The icon name.
-     * @private
-     */
-    _addColorWithOpacityRows(parent, settings, colorKey, opacityKey, title, icon) {
-        const rowColor = new Adw.ActionRow({ title, icon_name: icon });
-        const colorButton = new Gtk.ColorDialogButton({ dialog: new Gtk.ColorDialog(), valign: Gtk.Align.CENTER });
+        const engineGroup = new Adw.PreferencesGroup({ 
+            title: 'AI Engine (BYOK)',
+            description: 'Choose your preferred AI and enter your personal API key. Your key stays on your device.'
+        });
 
-        const syncColor = () => {
-            let hex = settings.get_string(colorKey) || '#4a6fa5';
-            const rgba = new Gdk.RGBA(); 
-            rgba.parse(hex.substring(0, 7)); 
-            colorButton.set_rgba(rgba);
+        const providerRow = new Adw.ComboRow({
+            title: 'Select AI Provider',
+            model: Gtk.StringList.new(['Google Gemini (Free)', 'Groq (Fastest)', 'Ollama (Local AI)', 'Perplexity (Smart)', 'Cohere (Free Web AI)'])
+        });
+        this.settings.bind('ai-provider', providerRow, 'selected', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(providerRow);
+
+        const geminiKeyRow = new Adw.PasswordEntryRow({ title: 'Gemini API Key' });
+        this.settings.bind('ai-api-key-gemini', geminiKeyRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(geminiKeyRow);
+
+        const groqKeyRow = new Adw.PasswordEntryRow({ title: 'Groq API Key' });
+        this.settings.bind('ai-api-key-groq', groqKeyRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(groqKeyRow);
+
+        const perpKeyRow = new Adw.PasswordEntryRow({ title: 'Perplexity API Key' });
+        this.settings.bind('ai-api-key-perplexity', perpKeyRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(perpKeyRow);
+
+        const cohereKeyRow = new Adw.PasswordEntryRow({ title: 'Cohere API Key' });
+        this.settings.bind('ai-api-key-cohere', cohereKeyRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(cohereKeyRow);
+
+        const updateVisibility = () => {
+            let provider = this.settings.get_int('ai-provider');
+            geminiKeyRow.visible = (provider === 0);
+            groqKeyRow.visible = (provider === 1);
+            perpKeyRow.visible = (provider === 3);
+            cohereKeyRow.visible = (provider === 4);
         };
+        
+        this._bindSignal('ai-provider', updateVisibility);
+        updateVisibility();
+        page.add(engineGroup);
 
-        colorButton.connect('notify::rgba', () => {
-            const color = colorButton.get_rgba();
-            const toHex = (n) => Math.round(n * 255).toString(16).padStart(2, '0');
-            settings.set_string(colorKey, `#${toHex(color.red)}${toHex(color.green)}${toHex(color.blue)}`);
+        const helpGroup = new Adw.PreferencesGroup({ title: 'Need Help?' });
+        const helpRow = new Adw.ActionRow({
+            title: 'How to get a free API Key?',
+            subtitle: 'Open Rudra Launcher and type "? help" to read the guide.',
+            icon_name: 'dialog-information-symbolic'
         });
+        helpGroup.add(helpRow);
+        page.add(helpGroup);
 
-        syncColor();
-        settings.connect(`changed::${colorKey}`, syncColor);
-        rowColor.add_suffix(colorButton); 
-        rowColor.add_suffix(makeResetBtn(settings, colorKey));
-
-        const rowOpacity = new Adw.SpinRow({ 
-            title: `${title} Opacity`, 
-            subtitle: '0 = Invisible, 255 = Opaque', 
-            icon_name: 'image-filter-symbolic', 
-            adjustment: new Gtk.Adjustment({ lower: 0, upper: 255, step_increment: 5, page_increment: 10 }) 
-        });
-        settings.bind(opacityKey, rowOpacity, 'value', 0);
-        rowOpacity.add_suffix(makeResetBtn(settings, opacityKey));
-
-        parent.add_row(rowColor); 
-        parent.add_row(rowOpacity);
+        return page;
     }
 
-
-    /**
-     * Builds the About page showing extension details and links.
-     * @param {Adw.PreferencesWindow} window - The parent window.
-     * @private
-     */
-    _buildAboutPage(window) {
+    _createAboutPage(window) {
         const page = new Adw.PreferencesPage({ title: 'About', icon_name: 'help-about-symbolic' });
-        window.add(page);
         
         this._buildAboutHero(page); 
         this._buildAboutLinks(page, window); 
         this._buildAboutAuthor(page); 
         this._buildAboutDonations(page, window);
+        
+        return page;
     }
 
-
-    /**
-     * Builds the hero section of the about page (Logo, Name, Subtitle).
-     * @param {Adw.PreferencesPage} page - The about page.
-     * @private
-     */
     _buildAboutHero(page) {
         const group = new Adw.PreferencesGroup(); 
         page.add(group);
         
         const heroBox = new Gtk.Box({ 
-            orientation: Gtk.Orientation.VERTICAL, 
-            spacing: 12, 
-            halign: Gtk.Align.CENTER, 
-            margin_top: 24, 
-            margin_bottom: 12 
+            orientation: Gtk.Orientation.VERTICAL, spacing: 12, 
+            halign: Gtk.Align.CENTER, margin_top: 24, margin_bottom: 12 
         });
 
         const logo = Gtk.Image.new_from_file(`${this.path}/icons/logo.svg`);
@@ -413,20 +285,13 @@ export default class RudraPreferences extends ExtensionPreferences {
         
         heroBox.append(new Gtk.Label({ label: '<span size="xx-large" weight="bold">Rudra</span>', use_markup: true, margin_top: 8 }));
         heroBox.append(new Gtk.Label({ label: 'A lightning-fast launcher for GNOME Shell', css_classes: ['dim-label'], margin_bottom: 4 }));
-        heroBox.append(new Gtk.Label({ label: 'Version 1  •  GPL-3.0', css_classes: ['dim-label', 'caption'] }));
+        heroBox.append(new Gtk.Label({ label: 'Version 8  •  GPL-3.0', css_classes: ['dim-label', 'caption'] }));
 
         const row = new Adw.ActionRow(); 
         row.set_child(heroBox); 
         group.add(row);
     }
 
-
-    /**
-     * Builds the links section for GitHub.
-     * @param {Adw.PreferencesPage} page - The about page.
-     * @param {Adw.PreferencesWindow} window - The parent window.
-     * @private
-     */
     _buildAboutLinks(page, window) {
         const group = new Adw.PreferencesGroup({ title: 'Links' }); 
         page.add(group);
@@ -445,12 +310,6 @@ export default class RudraPreferences extends ExtensionPreferences {
         addLink('GitHub Repository', 'github.com/narkagni/rudra', 'system-software-install-symbolic', 'https://github.com/narkagni/rudra');
     }
 
-
-    /**
-     * Builds the credits section.
-     * @param {Adw.PreferencesPage} page - The about page.
-     * @private
-     */
     _buildAboutAuthor(page) {
         const group = new Adw.PreferencesGroup({ title: 'Credits' }); 
         page.add(group);
@@ -459,13 +318,6 @@ export default class RudraPreferences extends ExtensionPreferences {
         group.add(new Adw.ActionRow({ title: 'Disclaimer', subtitle: 'Not affiliated with Google or YouTube', icon_name: 'dialog-information-symbolic' }));
     }
 
-
-    /**
-     * Builds the donations section.
-     * @param {Adw.PreferencesPage} page - The about page.
-     * @param {Adw.PreferencesWindow} window - The parent window.
-     * @private
-     */
     _buildAboutDonations(page, window) {
         const group = new Adw.PreferencesGroup({ 
             title: 'Support Development', 
@@ -503,8 +355,7 @@ export default class RudraPreferences extends ExtensionPreferences {
                 window.get_display().get_clipboard().set_content(Gdk.ContentProvider.new_for_value(address));
                 try { 
                     window.add_toast(new Adw.Toast({ title: `${coin} address copied!`, timeout: 2 })); 
-                } catch (error) {
-                }
+                } catch (error) {}
             });
             
             row.add_suffix(copyBtn); 
@@ -514,5 +365,42 @@ export default class RudraPreferences extends ExtensionPreferences {
         addCrypto('Bitcoin (BTC)', 'security-high-symbolic', '1GSHkxfhYjk1Qe4AQSHg3aRN2jg2GQWAcV');
         addCrypto('Ethereum (ETH)', 'emblem-shared-symbolic', '0xf43c3f83e53495ea06676c0d9d4fc87ce627ffa3');
         addCrypto('Tether (USDT - TRC20)', 'security-medium-symbolic', 'THnqG9nchLgaf1LzGK3CqdmNpRxw59hs82');
+    }
+
+    _bindSignal(key, callback) {
+        this._settingsSignals.push(this.settings.connect(`changed::${key}`, callback));
+    }
+
+    _makeResetBtn(key) {
+        const box = new Gtk.Box({ orientation: Gtk.Orientation.HORIZONTAL, spacing: 8, valign: Gtk.Align.CENTER });
+        const divider = new Gtk.Separator({ orientation: Gtk.Orientation.VERTICAL });
+        divider.set_margin_top(8); divider.set_margin_bottom(8);
+        box.append(divider);
+        const btn = new Gtk.Button({
+            icon_name: 'edit-undo-symbolic', valign: Gtk.Align.CENTER,
+            css_classes: ['flat', 'circular'], tooltip_text: 'Reset to default'
+        });
+        const updateBtnState = () => {
+            const isDef = this.settings.get_value(key).equal(this.settings.get_default_value(key));
+            btn.set_sensitive(!isDef);
+            btn.set_opacity(isDef ? 0.3 : 1.0);
+        };
+        btn.connect('clicked', () => this.settings.reset(key));
+        this._bindSignal(key, updateBtnState);
+        updateBtnState();
+        box.append(btn);
+        return box;
+    }
+
+    _addSpinRow(group, key, title, subtitle, icon, min, max, step = 1) {
+        const row = new Adw.ActionRow({ title, subtitle, icon_name: icon });
+        const spinButton = new Gtk.SpinButton({
+            adjustment: new Gtk.Adjustment({ lower: min, upper: max, step_increment: step }),
+            numeric: true, valign: Gtk.Align.CENTER
+        });
+        this.settings.bind(key, spinButton, 'value', Gio.SettingsBindFlags.DEFAULT);
+        row.add_suffix(spinButton);
+        row.add_suffix(this._makeResetBtn(key));
+        group.add(row);
     }
 }
