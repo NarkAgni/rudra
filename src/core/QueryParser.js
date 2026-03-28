@@ -168,21 +168,28 @@ export function fetchResults(query, maxRes, settings, callback) {
             let appInfo = null;
 
             if (r.type === 'app') {
-                let sysApp = appSystem.lookup_app(r.id);
-                if (sysApp) {
-                    appInfo = sysApp.get_app_info();
-                    icon = appInfo.get_icon();
-                    if (!finalName) finalName = sysApp.get_name();
-                } else {
-                    appInfo = Gio.DesktopAppInfo.new(r.id);
-                    if (appInfo) {
+                    r.isSetting = r.id.includes('gnome-control-center') || 
+                                  r.id.includes('panel') || 
+                                  r.id.includes('org.gnome.settings');
+
+                    let sysApp = appSystem.lookup_app(r.id);
+                    if (sysApp) {
+                        appInfo = sysApp.get_app_info();
                         icon = appInfo.get_icon();
-                        if (!finalName) finalName = appInfo.get_name();
+                        if (!finalName) finalName = sysApp.get_name();
+                        if (r.isSetting) finalDesc = appInfo.get_description() || ''; 
                     } else {
-                        icon = new Gio.ThemedIcon({ name: 'application-x-executable' });
+                        appInfo = Gio.DesktopAppInfo.new(r.id);
+                        if (appInfo) {
+                            icon = appInfo.get_icon();
+                            if (!finalName) finalName = appInfo.get_name();
+                            if (r.isSetting) finalDesc = appInfo.get_description() || '';
+                        } else {
+                            icon = new Gio.ThemedIcon({ name: 'application-x-executable' });
+                            if (r.isSetting) finalDesc = '';
+                        }
                     }
-                }
-            } else if (r.type === 'web') {
+                } else if (r.type === 'web') {
                 icon = new Gio.ThemedIcon({ name: 'web-browser-symbolic' });
             } else if (r.type === 'command') {
                 icon = new Gio.ThemedIcon({ name: 'utilities-terminal-symbolic' });
@@ -199,12 +206,12 @@ export function fetchResults(query, maxRes, settings, callback) {
             }
 
             return {
-                ...r,
-                name: finalName || 'Recent Item',
-                description: finalDesc || 'Recently used',
-                icon: icon,
-                appInfo: appInfo
-            };
+                    ...r,
+                    name: finalName || 'Recent Item',
+                    description: (r.isSetting && finalDesc === '') ? '' : (finalDesc || 'Recently used'),
+                    icon: icon,
+                    appInfo: appInfo
+                };
         });
 
         callback(results);

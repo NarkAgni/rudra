@@ -448,8 +448,46 @@ export class SearchResults {
             this._gridBox.hide(); this._listBox.show();
             if ((!this._currentQuery || this._currentQuery.trim() === '') && this._emptyStateDividerIndex > 0) {
                 let headerSize = Math.max(10, this._fontSizePt * 0.85);
-                let headerLabel = new St.Label({ text: 'Recent Searches', style: `font-family: "${this._fontFamily}"; font-size: ${headerSize}pt; font-weight: bold; color: #888888; padding: 4px 12px; margin-bottom: 4px; background: transparent;` });
-                this._listBox.add_child(headerLabel);
+                
+                let headerRow = new St.BoxLayout({ 
+                    vertical: false, 
+                    x_expand: true, 
+                    style: 'padding: 4px 12px; margin-bottom: 4px;' 
+                });
+                
+                let headerLabel = new St.Label({ 
+                    text: 'Recent Searches', 
+                    x_expand: true, 
+                    y_align: Clutter.ActorAlign.CENTER,
+                    style: `font-family: "${this._fontFamily}"; font-size: ${headerSize}pt; font-weight: bold; color: #888888; background: transparent;` 
+                });
+                
+                let clearBtn = new St.Button({ 
+                    reactive: true, 
+                    can_focus: true,
+                    y_align: Clutter.ActorAlign.CENTER,
+                    style: `font-family: "${this._fontFamily}"; font-size: ${Math.max(9, this._fontSizePt * 0.75)}pt; color: #888888; background: transparent; padding: 2px 8px; border-radius: 6px;`
+                });
+                clearBtn.set_child(new St.Label({ text: 'Clear Recent', style: 'color: inherit;' }));
+                
+                clearBtn.connect('enter-event', () => {
+                    clearBtn.set_style(`font-family: "${this._fontFamily}"; font-size: ${Math.max(9, this._fontSizePt * 0.75)}pt; color: #f87171; background-color: rgba(239, 68, 68, 0.15); padding: 2px 8px; border-radius: 6px;`);
+                    return Clutter.EVENT_PROPAGATE;
+                });
+                clearBtn.connect('leave-event', () => {
+                    clearBtn.set_style(`font-family: "${this._fontFamily}"; font-size: ${Math.max(9, this._fontSizePt * 0.75)}pt; color: #888888; background: transparent; padding: 2px 8px; border-radius: 6px;`);
+                    return Clutter.EVENT_PROPAGATE;
+                });
+                
+                clearBtn.connect('clicked', () => {
+                    HistoryManager.clearHistory();
+                    this.update(this._currentQuery);
+                });
+                
+                headerRow.add_child(headerLabel);
+                headerRow.add_child(clearBtn);
+                
+                this._listBox.add_child(headerRow);
             }
 
             this._resultsData.forEach((item, index) => {
