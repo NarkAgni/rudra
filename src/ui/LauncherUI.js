@@ -260,6 +260,12 @@ export class LauncherUI {
             hideMenuIfOutside(this._categoryMenu, this._categoryButton);
             hideMenuIfOutside(this._tagMenu, this._tagButton);
 
+            // Close when clicking outside the launcher (replaces the implicit close behavior of the original pushModal)
+            if (!_isInsideBox(x, y)) {
+                this.close();
+                return Clutter.EVENT_STOP;
+            }
+
             return Clutter.EVENT_PROPAGATE;
         });
 
@@ -329,6 +335,15 @@ export class LauncherUI {
             return Clutter.EVENT_PROPAGATE;
         });
 
+        // ── IME preedit handling ──────────────────────────────────────────
+        // When IBus/Fcitx is in composition mode, preedit text is temporarily
+        // injected into clutter_text. At this time, search or autocomplete should
+        // not be triggered, otherwise candidate words will be treated as search terms.
+        // GNOME 50 removed preedit-changed / preedit-end signals.
+        // Now proactively check via get_preedit_string() on text-changed.
+        this._preeditActive = false;
+        // ────────────────────────────────────────────────────────────────
+
         this._entryContainer.add_child(this._hintLabel);
         this._entryContainer.add_child(this._entry);
         this._headerBox.add_child(this._entryContainer);
@@ -347,8 +362,17 @@ export class LauncherUI {
         this._mainBox.add_child(this._tintBg);
         this._mainBox.add_child(this._contentBox);
         this._container.add_child(this._mainBox);
-        Main.uiGroup.add_child(this._container);
-        Main.uiGroup.set_child_above_sibling(this._container, null);
+        // Register the container as chrome, placing it just above the overviewGroup.
+        // Do not use set_child_above_sibling(null) (topmost) as it would cover the IME candidate window.
+        Main.layoutManager.addChrome(this._container, {
+            affectsStruts: false,
+            trackFullscreen: false,
+        });
+        // Ensure it sits above overviewGroup but below keyboardGroup / IME layer
+        let keyboardGroup = Main.layoutManager.keyboardBox ?? Main.keyboard.actor;
+        if (keyboardGroup) {
+            Main.uiGroup.set_child_below_sibling(this._container, keyboardGroup);
+        }
 
         this._resultsView.onVisibilityChange = (isVisible) => { this._separator.visible = isVisible; };
         
@@ -357,6 +381,7 @@ export class LauncherUI {
 
     showModeHint(text) {
         if (this._isOpen === false) return;
+        try { let [p] = this._entry?.clutter_text?.get_preedit_string() ?? ['']; if (p?.length > 0) return; } catch(e){}
         this._syncHintFont();
         this._suggestedSuffix = '';
         this._hintLabel.set_text(text);
@@ -376,6 +401,7 @@ export class LauncherUI {
 
     showAutocomplete(appName, extraHint = '') {
         if (this._isOpen === false) return;
+        try { let [p] = this._entry?.clutter_text?.get_preedit_string() ?? ['']; if (p?.length > 0) return; } catch(e){}
         if (this._autocompleteIdleId) {
             GLib.source_remove(this._autocompleteIdleId);
             this._autocompleteIdleId = 0;
@@ -443,6 +469,10 @@ export class LauncherUI {
         });
     }
 
+    /** LauncherInput.js text-changed callback should check this property first.
+     *  When true, skip search to avoid treating IME preedit text as search terms */
+    get isPreeditActive() { return this._preeditActive === true; }
+
     toggle() { if (this._isOpen === true) this.close(); else this.open(false); }
 
     open(isPreview = false) {
@@ -454,7 +484,6 @@ export class LauncherUI {
         this._isPreviewMode = isPreview;
         this._userTypedText = '';
         this._container.show();
-        this._container.get_parent().set_child_above_sibling(this._container, null);
 
         this._entry.clutter_text.set_text('');
         this._hintLabel.hide();
@@ -479,14 +508,21 @@ export class LauncherUI {
         } else {
             this._container.reactive = true;
 
-            if (!this._modalActive) {
-                this._modalGrab = Main.pushModal(this._container, { actionMode: Shell.ActionMode.ALL });
-                this._modalActive = true;
-            }
+            // Do not use Main.pushModal(): its event isolation layer would intercept
+            // mouse events from IBus/Fcitx candidate windows, preventing clicks on candidates.
+            // Instead, manage focus directly and close via button-press-event when clicking outside.
 
-            this._focusTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 10, () => {
+            this._focusTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
                 this._focusTimeoutId = 0;
-                if (this._entry && this._isOpen === true) global.stage.set_key_focus(this._entry);
+                if (this._entry && this._isOpen === true) {
+                    // 先置空再赋焦，给 IBus/Fcitx 完整的"焦点离开→进入"信号
+                    global.stage.set_key_focus(null);
+                    GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                        if (this._entry && this._isOpen === true)
+                            global.stage.set_key_focus(this._entry);
+                        return GLib.SOURCE_REMOVE;
+                    });
+                }
                 return GLib.SOURCE_REMOVE;
             });
         }
@@ -500,19 +536,17 @@ export class LauncherUI {
             global.stage.set_key_focus(null);
         }
 
-        if (this._modalActive) {
-            this._modalActive = false;
+        // Return focus to the currently active window, ensuring the IME (IBus/Fcitx) correctly restores its state
+        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
             try {
-                if (this._modalGrab) {
-                    Main.popModal(this._modalGrab);
-                    this._modalGrab = null;
-                } else {
-                    Main.popModal(this._container);
+                let focusWindow = global.display.focus_window;
+                if (focusWindow) {
+                    let actor = focusWindow.get_compositor_private();
+                    if (actor) global.stage.set_key_focus(actor);
                 }
-            } catch (e) {
-                console.error('Rudra popModal Error:', e);
-            }
-        }
+            } catch (e) { /* ignore */ }
+            return GLib.SOURCE_REMOVE;
+        });
 
         this._container.hide();
 
@@ -564,6 +598,9 @@ export class LauncherUI {
         if (this._settingsSignal) { this._settings.disconnect(this._settingsSignal); this._settingsSignal = 0; }
         if (this._shortcutSignal) { this._settings.disconnect(this._shortcutSignal); this._shortcutSignal = 0; }
         if (this._resultsView) this._resultsView.destroy();
-        if (this._container) this._container.destroy();
+        if (this._container) {
+            try { Main.layoutManager.removeChrome(this._container); } catch (e) {}
+            this._container.destroy();
+        }
     }
 }
