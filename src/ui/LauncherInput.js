@@ -35,6 +35,17 @@ export function bindEntryEvents(ctx) {
             GLib.source_remove(ctx._searchTimeoutId);
             ctx._searchTimeoutId = 0;
         }
+        try {
+            let [preedit] = ctx._entry.clutter_text.get_preedit_string();
+            ctx._preeditActive = preedit && preedit.length > 0;
+
+            if (ctx._preeditActive) {
+                ctx._hintLabel.hide();
+                return;
+            }
+        } catch (e) {
+            ctx._preeditActive = false;
+        }
 
         ctx._gridFocusMode = false;
         ctx._entry.remove_style_class_name('rudra-grid-focus');
@@ -72,7 +83,7 @@ export function bindEntryEvents(ctx) {
         ctx._suggestedSuffix = '';
 
         let isOtherPrefix = triggersExact.some(p => lowerText.startsWith(p.toLowerCase()));
-        
+
         let tSn = '!';
         let tFile = '.';
         let tCmd = '>';
@@ -90,8 +101,8 @@ export function bindEntryEvents(ctx) {
         let trimYt = getTrigger(ctx._settings, 'trigger-youtube').trim().toLowerCase();
         let trimDdg = getTrigger(ctx._settings, 'trigger-ddg').trim().toLowerCase();
         let trimW = getTrigger(ctx._settings, 'trigger-wiki').trim().toLowerCase();
-        let trimPx = getTrigger(ctx._settings, 'trigger-perplexity').trim().toLowerCase(); 
-        let trimCo = getTrigger(ctx._settings, 'trigger-cohere').trim().toLowerCase(); 
+        let trimPx = getTrigger(ctx._settings, 'trigger-perplexity').trim().toLowerCase();
+        let trimCo = getTrigger(ctx._settings, 'trigger-cohere').trim().toLowerCase();
         let trimCb = getTrigger(ctx._settings, 'trigger-clipboard').trim().toLowerCase();
         let trimIc = getTrigger(ctx._settings, 'trigger-icon').trim().toLowerCase();
         let trimEm = getTrigger(ctx._settings, 'trigger-emoji').trim().toLowerCase();
@@ -129,6 +140,9 @@ export function bindEntryEvents(ctx) {
 
         ctx._searchTimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 120, () => {
             ctx._searchTimeoutId = 0;
+
+            if (ctx._preeditActive) return GLib.SOURCE_REMOVE;
+
             let queryText = text;
             let tAi = getTrigger(ctx._settings, 'trigger-ai');
 
@@ -147,6 +161,12 @@ export function bindEntryEvents(ctx) {
     ctx._entry.clutter_text.connect('key-press-event', (actor, event) => {
         let keySymbol = event.get_key_symbol();
 
+        let hasPreedit = false;
+        try {
+            let [preedit] = ctx._entry.clutter_text.get_preedit_string();
+            hasPreedit = preedit && preedit.length > 0;
+        } catch (e) { }
+
         if (ctx._resultsView && ctx._resultsView.isSnippetFormVisible) {
             if (keySymbol === Clutter.KEY_Escape) {
                 if (ctx._headerBox) ctx._headerBox.show();
@@ -161,6 +181,10 @@ export function bindEntryEvents(ctx) {
         let isGrid = firstItem && (firstItem.type === 'emoji' || firstItem.type === 'icon-browser') && ctx._resultsView.viewMode !== 'list';
 
         if (keySymbol === Clutter.KEY_Return || keySymbol === Clutter.KEY_KP_Enter) {
+            if (hasPreedit) {
+                return Clutter.EVENT_PROPAGATE;
+            }
+
             ctx._resultsView.activateSelected();
             return Clutter.EVENT_STOP;
         }
@@ -171,7 +195,7 @@ export function bindEntryEvents(ctx) {
             let tEmLower = /^[a-zA-Z0-9]+$/.test(trimEm) ? trimEm.toLowerCase() + ' ' : trimEm.toLowerCase();
             let trimIc = getTrigger(ctx._settings, 'trigger-icon').trim().toLowerCase();
             let tIcLower = /^[a-zA-Z0-9]+$/.test(trimIc) ? trimIc.toLowerCase() + ' ' : trimIc.toLowerCase();
-            
+
             let isEmpty = searchText.trim() === '' || searchText.toLowerCase() === tEmLower || searchText.toLowerCase() === tIcLower;
 
             if (keySymbol === Clutter.KEY_Tab || keySymbol === Clutter.KEY_ISO_Left_Tab) {
@@ -240,6 +264,19 @@ export function bindEntryEvents(ctx) {
         if (event.type() !== Clutter.EventType.KEY_PRESS) return Clutter.EVENT_PROPAGATE;
 
         let keySymbol = event.get_key_symbol();
+
+        let hasPreedit = false;
+        try {
+            let [preedit] = ctx._entry.clutter_text.get_preedit_string();
+            hasPreedit = preedit && preedit.length > 0;
+        } catch (e) { }
+
+        if (hasPreedit) {
+            return Clutter.EVENT_PROPAGATE;
+        }
+        
+        console.log("hasPreedit",hasPreedit)
+
         let state = event.get_state() & DEFAULT_MOD_MASK;
 
         if (keySymbol === Clutter.KEY_Escape) {
