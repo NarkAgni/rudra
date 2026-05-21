@@ -30,7 +30,7 @@ export function fetchAIResponse(provider, apiKey, messages, callback, isQuickAns
     if (provider === 0) {
         if (!apiKey) { callback("Error: Google Gemini API Key is missing. Please add it in settings."); return; }
         
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
         let message = Soup.Message.new('POST', url);
         
         let contents = messages.map(m => ({
