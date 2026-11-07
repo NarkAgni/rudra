@@ -542,6 +542,8 @@ export class SearchResults {
 
                     let apiKey = '';
                     try { apiKey = this._settings.get_string(isPx ? 'ai-api-key-perplexity' : 'ai-api-key-cohere'); } catch (e) {}
+                    let model = '';
+                    try { model = this._settings.get_string(isPx ? 'ai-model-perplexity' : 'ai-model-cohere'); } catch (e) {}
 
                     if (!apiKey) {
                         item.name = 'API Key Missing';
@@ -570,7 +572,7 @@ export class SearchResults {
                         item.text = response.trim();
                         item.isMultiline = true; 
                         this._rebuildUI();
-                    }, true); 
+                    }, true, model); 
 
                     return Clutter.EVENT_STOP;
                 }
@@ -798,6 +800,8 @@ export class SearchResults {
 
                 let apiKey = '';
                 try { apiKey = this._settings.get_string(isPx ? 'ai-api-key-perplexity' : 'ai-api-key-cohere'); } catch(e) {}
+                let model = '';
+                try { model = this._settings.get_string(isPx ? 'ai-model-perplexity' : 'ai-model-cohere'); } catch(e) {}
                 
                 if (!apiKey) {
                     item.name = 'API Key Missing';
@@ -826,7 +830,7 @@ export class SearchResults {
                     item.text = response.trim();
                     item.isMultiline = true; 
                     this._rebuildUI();
-                }, true);
+                }, true, model);
 
                 return;
             }

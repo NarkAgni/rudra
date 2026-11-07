@@ -23,14 +23,23 @@ import GLib from 'gi://GLib';
 const session = new Soup.Session();
 session.timeout = 30; 
 
-export function fetchAIResponse(provider, apiKey, messages, callback, isQuickAnswer = false) {
+const DEFAULT_MODELS = {
+    0: 'gemini-1.5-flash-latest',
+    1: 'llama-3.1-8b-instant',
+    2: 'phi3',
+    3: 'sonar',
+    4: 'command-a-03-2025'
+};
+
+export function fetchAIResponse(provider, apiKey, messages, callback, isQuickAnswer = false, model = '') {
+    const selectedModel = model || DEFAULT_MODELS[provider] || '';
     // 0 = Gemini, 1 = Groq, 2 = Ollama, 3 = Perplexity, 4 = Cohere
     
     // 1. GOOGLE GEMINI
     if (provider === 0) {
         if (!apiKey) { callback("Error: Google Gemini API Key is missing. Please add it in settings."); return; }
         
-        let url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
         let message = Soup.Message.new('POST', url);
         
         let contents = messages.map(m => ({
@@ -64,7 +73,7 @@ export function fetchAIResponse(provider, apiKey, messages, callback, isQuickAns
         message.get_request_headers().append('Authorization', `Bearer ${apiKey}`);
         
         let groqMessages = messages.map(m => ({ role: m.role, content: m.rawContent }));
-        let body = { model: 'llama-3.1-8b-instant', messages: groqMessages };
+        let body = { model: selectedModel, messages: groqMessages };
         let bytes = new GLib.Bytes(JSON.stringify(body));
         message.set_request_body_from_bytes('application/json', bytes);
         
@@ -89,7 +98,7 @@ export function fetchAIResponse(provider, apiKey, messages, callback, isQuickAns
         let ollamaMessages = messages.map(m => ({ role: m.role, content: m.rawContent }));
         
         let body = { 
-            model: 'phi3',
+            model: selectedModel,
             messages: ollamaMessages,
             stream: false
         };
@@ -123,7 +132,7 @@ export function fetchAIResponse(provider, apiKey, messages, callback, isQuickAns
         message.get_request_headers().append('content-type', 'application/json');
         
         let perpMessages = messages.map(m => ({ role: m.role, content: m.rawContent }));
-        let body = { model: 'sonar', messages: perpMessages };
+        let body = { model: selectedModel, messages: perpMessages };
 
         if (isQuickAnswer) body.max_tokens = 75;
 
@@ -164,7 +173,7 @@ export function fetchAIResponse(provider, apiKey, messages, callback, isQuickAns
         let currentMessage = messages[messages.length - 1].rawContent;
 
         let body = { 
-            model: 'command-a-03-2025', 
+            model: selectedModel, 
             message: currentMessage, 
             chat_history: cohereMessages
         };

@@ -144,10 +144,12 @@ export function showAIGuide(ctx) {
 function _triggerAIRequest(ctx) {
     let provider = ctx._aiProviderId !== undefined ? ctx._aiProviderId : ctx._settings.get_int('ai-provider');
     let apiKey = '';
-    if (provider === 0) apiKey = ctx._settings.get_string('ai-api-key-gemini');
-    else if (provider === 1) apiKey = ctx._settings.get_string('ai-api-key-groq');
-    else if (provider === 3) apiKey = ctx._settings.get_string('ai-api-key-perplexity');
-    else if (provider === 4) apiKey = ctx._settings.get_string('ai-api-key-cohere');
+    let model = '';
+    if (provider === 0) { apiKey = ctx._settings.get_string('ai-api-key-gemini'); model = ctx._settings.get_string('ai-model-gemini'); }
+    else if (provider === 1) { apiKey = ctx._settings.get_string('ai-api-key-groq'); model = ctx._settings.get_string('ai-model-groq'); }
+    else if (provider === 2) { model = ctx._settings.get_string('ai-model-ollama'); }
+    else if (provider === 3) { apiKey = ctx._settings.get_string('ai-api-key-perplexity'); model = ctx._settings.get_string('ai-model-perplexity'); }
+    else if (provider === 4) { apiKey = ctx._settings.get_string('ai-api-key-cohere'); model = ctx._settings.get_string('ai-model-cohere'); }
 
     fetchAIResponse(provider, apiKey, ctx._aiChatHistory, (response) => {
         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
@@ -164,7 +166,7 @@ function _triggerAIRequest(ctx) {
             showAIView(ctx, null);
             return GLib.SOURCE_REMOVE;
         });
-    });
+    }, false, model);
 }
 
 export function showAIView(ctx, question, existingChatData = null, isNewEmpty = false) {
