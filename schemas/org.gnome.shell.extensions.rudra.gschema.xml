@@ -52,6 +52,12 @@
     <key name="ai-api-key-perplexity" type="s"><default>""</default></key>
     <key name="ai-api-key-cohere" type="s"><default>""</default></key>
 
+    <key name="ai-model-gemini" type="s"><default>'gemini-1.5-flash-latest'</default></key>
+    <key name="ai-model-groq" type="s"><default>'llama-3.1-8b-instant'</default></key>
+    <key name="ai-model-ollama" type="s"><default>'phi3'</default></key>
+    <key name="ai-model-perplexity" type="s"><default>'sonar'</default></key>
+    <key name="ai-model-cohere" type="s"><default>'command-a-03-2025'</default></key>
+
     <key name="search-history" type="as"><default>[]</default></key>
     <key name="ai-chat-history" type="as"><default>[]</default></key>
     

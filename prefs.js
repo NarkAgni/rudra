@@ -235,12 +235,37 @@ export default class RudraPreferences extends ExtensionPreferences {
         this.settings.bind('ai-api-key-cohere', cohereKeyRow, 'text', Gio.SettingsBindFlags.DEFAULT);
         engineGroup.add(cohereKeyRow);
 
+        const geminiModelRow = new Adw.EntryRow({ title: 'Gemini Model (e.g. gemini-1.5-flash)' });
+        this.settings.bind('ai-model-gemini', geminiModelRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(geminiModelRow);
+
+        const groqModelRow = new Adw.EntryRow({ title: 'Groq Model (e.g. llama-3.1-8b-instant)' });
+        this.settings.bind('ai-model-groq', groqModelRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(groqModelRow);
+
+        const ollamaModelRow = new Adw.EntryRow({ title: 'Ollama Model (e.g. phi3)' });
+        this.settings.bind('ai-model-ollama', ollamaModelRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(ollamaModelRow);
+
+        const perpModelRow = new Adw.EntryRow({ title: 'Perplexity Model (e.g. sonar)' });
+        this.settings.bind('ai-model-perplexity', perpModelRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(perpModelRow);
+
+        const cohereModelRow = new Adw.EntryRow({ title: 'Cohere Model (e.g. command-a-03-2025)' });
+        this.settings.bind('ai-model-cohere', cohereModelRow, 'text', Gio.SettingsBindFlags.DEFAULT);
+        engineGroup.add(cohereModelRow);
+
         const updateVisibility = () => {
             let provider = this.settings.get_int('ai-provider');
             geminiKeyRow.visible = (provider === 0);
             groqKeyRow.visible = (provider === 1);
             perpKeyRow.visible = (provider === 3);
             cohereKeyRow.visible = (provider === 4);
+            geminiModelRow.visible = (provider === 0);
+            groqModelRow.visible = (provider === 1);
+            ollamaModelRow.visible = (provider === 2);
+            perpModelRow.visible = (provider === 3);
+            cohereModelRow.visible = (provider === 4);
         };
         
         this._bindSignal('ai-provider', updateVisibility);
